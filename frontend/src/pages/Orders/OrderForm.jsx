@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchCustomers } from '@/api/customers';
+import { fetchCustomers, createCustomer } from '@/api/customers';
 import { fetchMenu } from '@/api/menu';
 import { createOrder, getOrder, updateOrder } from '@/api/orders';
 import { formatPaiseToRupees } from '@/utils/formatters';
@@ -148,14 +148,23 @@ export default function OrderForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!customerId) return toast.error("Please select a customer");
+    if (!customerId && !customerSearch.trim()) return toast.error("Please select or type a customer name");
     if (!dueDate) return toast.error("Please set a due date");
     if (orderItems.length === 0) return toast.error("Add at least one item");
 
     setSubmitting(true);
     try {
+      let finalCustomerId = customerId;
+
+      // Auto-create customer if it's a new name
+      if (!finalCustomerId && customerSearch.trim()) {
+        const newCustomer = await createCustomer({ name: customerSearch.trim() });
+        finalCustomerId = newCustomer.id;
+        toast.success(`Created new customer profile: ${customerSearch.trim()}`);
+      }
+
       const payload = {
-        customer_id: parseInt(customerId),
+        customer_id: parseInt(finalCustomerId),
         due_date: dueDate,
         fulfillment_type: fulfillmentType,
         delivery_address: fulfillmentType === 'delivery' ? deliveryAddress : null,
@@ -205,13 +214,13 @@ export default function OrderForm() {
           <CardContent>
             <div className="relative">
               <Input
-                placeholder="Search customer by name or phone..."
+                placeholder="Search existing or type new customer name..."
                 value={customerSearch}
                 onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true); setCustomerId(''); }}
                 onFocus={() => setShowCustomerDropdown(true)}
               />
               {showCustomerDropdown && filteredCustomers.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border  shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border  shadow-[4px_4px_0_0_rgba(0,0,0,1)] max-h-48 overflow-y-auto">
                   {filteredCustomers.map(c => (
                     <div
                       key={c.id}
@@ -226,6 +235,11 @@ export default function OrderForm() {
               )}
             </div>
             {customerId && <Badge variant="secondary" className="mt-2">Selected: {customerSearch}</Badge>}
+            {!customerId && customerSearch.trim() && (
+              <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200 shadow-none">
+                ✨ Will create new customer: {customerSearch}
+              </Badge>
+            )}
           </CardContent>
         </Card>
 
