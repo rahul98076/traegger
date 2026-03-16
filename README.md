@@ -21,11 +21,13 @@ A professional, full-stack ERP and management solution tailored for artisanal ba
 - **Kitchen Tracker**: Real-time batch progression tracking (Prep -> Oven -> Packaging).
 - **Resource Assignment**: Link specific kitchen batches to customer orders for full traceability.
 
+
+
 ### ☁️ Data Integrity (Phase 13)
 - **Local-First Architecture**: Operates on a fast, local SQLite database for zero-latency operations during peak hours.
 - **Real-time Cloud Mirror**: Background synchronization to **Firebase Cloud Firestore** for remote monitoring and off-site data safety.
+- **Disaster Recovery**: One-click cloud-to-local database reconstruction from Firestore if the local service is corrupted or migrated.
 - **Health Monitoring**: Real-time sync status indicators and manual override controls.
-
 ### 📊 Business Intelligence
 - **Sales Analytics**: Dynamic charts for revenue trends, order status distribution, and bestselling product analysis.
 - **Daily Operations Dashboard**: High-level metrics for daily revenue, pending collections, and pickup status.

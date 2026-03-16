@@ -214,6 +214,24 @@ async def create_order(
     )
     await db.commit()
     await db.refresh(new_order)
+    
+    # Sync to Firebase
+    items_data = [{
+        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
+    } for i in new_order.items]
+    
+    push_sync_task(background_tasks, "order", new_order.id, {
+        "customer_id": new_order.customer_id,
+        "total_paise": new_order.total_paise,
+        "status": new_order.status,
+        "due_date": new_order.due_date,
+        "fulfillment_type": new_order.fulfillment_type,
+        "payment_status": new_order.payment_status,
+        "amount_paid_paise": new_order.amount_paid_paise,
+        "items": items_data
+    })
+    
     return await _build_response(new_order, db)
 
 
@@ -303,11 +321,20 @@ async def update_order(
     await db.refresh(order)
     
     # Sync to Firebase
+    items_data = [{
+        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
+    } for i in order.items]
+    
     push_sync_task(background_tasks, "order", order.id, {
         "customer_id": order.customer_id,
         "total_paise": order.total_paise,
         "status": order.status,
         "due_date": order.due_date,
+        "fulfillment_type": order.fulfillment_type,
+        "payment_status": order.payment_status,
+        "amount_paid_paise": order.amount_paid_paise,
+        "items": items_data
     })
     return await _build_response(order, db)
 
@@ -460,6 +487,24 @@ async def duplicate_order(
 
     await db.commit()
     await db.refresh(new_order)
+    
+    # Sync to Firebase
+    items_data = [{
+        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
+    } for i in new_order.items]
+    
+    push_sync_task(background_tasks, "order", new_order.id, {
+        "customer_id": new_order.customer_id,
+        "total_paise": new_order.total_paise,
+        "status": new_order.status,
+        "due_date": new_order.due_date,
+        "fulfillment_type": new_order.fulfillment_type,
+        "payment_status": new_order.payment_status,
+        "amount_paid_paise": new_order.amount_paid_paise,
+        "items": items_data
+    })
+    
     return await _build_response(new_order, db)
 
 

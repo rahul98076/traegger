@@ -65,4 +65,44 @@ To access the app via `pennys.home`:
 2. **Hosts File**: Alternatively, add `192.168.x.x pennys.home` to the `hosts` file on every computer that needs access.
 
 ## 7. Caddy Configuration
-We will use Caddy as the entrance to the app. I will provide the `Caddyfile` in the next step.
+Edit the Caddyfile located at `/etc/caddy/Caddyfile`:
+`sudo nano /etc/caddy/Caddyfile`
+
+```caddy
+pennys.home:80 {
+    # Serve built frontend files
+    root * /home/your_username/traegger/frontend/dist
+    file_server
+
+    # Handle React Router (SPA fallback)
+    try_files {path} /index.html
+
+    # Proxy API requests to backend
+    reverse_proxy /api/* 127.0.0.1:8000
+    
+    # Optional: Force HTTPS internally if dealing with sensitive internal certs
+}
+```
+
+Restart Caddy:
+`sudo systemctl reload caddy`
+
+Enable Caddy on boot:
+`sudo systemctl enable caddy`
+
+
+## 8. Data Safety & Cloud Recovery
+Penny's Bakery relies on a robust Firebase Cloud Firestore mirroring system.
+
+### Local-to-Cloud Mirroring
+Whenever an Order, Customer, or Menu Item is created or modified locally, the backend securely pushes the data (including granular line-items inside Orders) to the cloud Firebase instance.
+
+### System Boots & Systemd
+The backend should always be set up to start on boot: `sudo systemctl enable pennys-backend`. 
+
+### Cloud Restorations (Corrupted Local Database)
+If your `bakery.db` file becomes corrupted, or if you migrate a fresh Linux server and want to pull your historical data down:
+1. Ensure the new backend has the `traegger-c0901-firebase-adminsdk...json` key file configured.
+2. In the live Admin Dashboard, navigate to **Settings / Backup & Recovery**.
+3. Use the **Cloud to Local: Restore** action.
+4. The system will safely truncate your local empty/corrupted database tables and reconstruct all Orders, Menu Items, and Customers directly from your Firestore records, seamlessly.

@@ -85,3 +85,17 @@ async def force_firebase_sync(
     """
     background_tasks.add_task(full_sync_to_firestore, db)
     return {"status": "success", "message": "Full Firebase sync started in background"}
+
+from services.firebase_restore import pull_from_firestore
+
+@router.post("/cloud-restore", dependencies=[admin_only])
+async def restore_from_firebase(db: AsyncSession = Depends(get_db)):
+    """
+    Destructive operation: Wipes local database and fully rebuilds it 
+    from the current state of Firebase Firestore.
+    """
+    try:
+        result = await pull_from_firestore(db)
+        return result
+    except Exception as e:
+        raise HTTPException(500, f"Cloud restore failed: {str(e)}")

@@ -57,6 +57,25 @@ export default function AdminSettings() {
     }
   };
 
+
+  const handleCloudRestore = async () => {
+    if (!window.confirm("WARNING: This will completely wipe your local database and replace it with data from the cloud. Continue?")) return;
+    
+    try {
+      setSyncing(true);
+      await restoreFromCloud();
+      toast.success("Database successfully restored from Cloud!");
+      // Reload the page to refresh all app state cleanly
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      toast.error("Failed to restore from Cloud", {
+        description: err.response?.data?.detail || err.message,
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleExport = async () => {
     try {
       const blob = await exportDatabase();
@@ -192,20 +211,38 @@ export default function AdminSettings() {
               <CardDescription>Monitor and manage real-time synchronization to Firestore.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 border ">
-                <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12  flex items-center justify-center ${syncing ? 'bg-amber-100' : 'bg-emerald-100'}`}>
-                    <Cloud className={`h-6 w-6 ${syncing ? 'text-amber-600 animate-pulse' : 'text-emerald-600'}`} />
+                            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between p-4 border ">
+                  <div className="flex items-center gap-4">
+                    <div className={`h-12 w-12  flex items-center justify-center ${syncing ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                      <Cloud className={`h-6 w-6 ${syncing ? 'text-amber-600 animate-pulse' : 'text-emerald-600'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Local to Cloud: Push</p>
+                      <p className="text-sm text-slate-500">Overwrites cloud data with your local database.</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">Sync Status: {syncing ? 'Syncing...' : 'Healthy'}</p>
-                    <p className="text-sm text-slate-500">{syncing ? 'Full push in progress' : 'Background updates active'}</p>
-                  </div>
+                  <Button className="gap-2" onClick={handleForceSync} disabled={syncing}>
+                    <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} /> 
+                    {syncing ? 'Pushing Data...' : 'Force Push to Cloud'}
+                  </Button>
                 </div>
-                <Button className="gap-2" onClick={handleForceSync} disabled={syncing}>
-                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} /> 
-                  {syncing ? 'Pushing Data...' : 'Force Full Sync'}
-                </Button>
+                
+                <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 dark:bg-red-950/20">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 flex items-center justify-center bg-red-100 dark:bg-red-900 rounded-full">
+                      <Download className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-red-700 dark:text-red-400">Cloud to Local: Restore</p>
+                      <p className="text-sm text-red-600 dark:text-red-500">Wipes local database and replaces it with the latest cloud data.</p>
+                    </div>
+                  </div>
+                  <Button className="gap-2" variant="destructive" onClick={handleCloudRestore} disabled={syncing}>
+                    <Download className={`h-4 w-4 ${syncing ? 'animate-bounce' : ''}`} /> 
+                    {syncing ? 'Restoring...' : 'Restore from Cloud'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

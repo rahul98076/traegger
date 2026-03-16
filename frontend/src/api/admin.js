@@ -23,3 +23,8 @@ export const importDatabase = async (file) => {
     });
     return response.data;
 };
+
+export const restoreFromCloud = async () => {
+  const response = await client.post('/admin/backup/cloud-restore');
+  return response.data;
+};
