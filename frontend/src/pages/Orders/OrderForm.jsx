@@ -250,7 +250,7 @@ export default function OrderForm() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium block mb-1">Due Date *</label>
-                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch (err) {} }} required />
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">Fulfillment</label>

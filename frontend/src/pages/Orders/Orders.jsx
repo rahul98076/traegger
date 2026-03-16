@@ -111,7 +111,7 @@ export default function Orders() {
             <Button variant={dueDateFilter === tomorrow ? "default" : "outline"} className="shadow-none dark:shadow-none hover:shadow-none" size="sm" onClick={() => setDueDateFilter(dueDateFilter === tomorrow ? '' : tomorrow)}>
               Tomorrow
             </Button>
-            <Input type="date" value={dueDateFilter} onChange={(e) => setDueDateFilter(e.target.value)} className="w-36 h-8 text-sm" />
+            <Input type="date" value={dueDateFilter} onChange={(e) => setDueDateFilter(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch (err) {} }} className="w-36 h-8 text-sm" />
           </div>
           {!loading && (
             <Badge variant="secondary" className="text-xs whitespace-nowrap">{orders.length} order{orders.length !== 1 ? 's' : ''}</Badge>

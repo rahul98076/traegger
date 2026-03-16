@@ -135,7 +135,7 @@ export default function Kitchen() {
           <p className="text-slate-500">Track batch progress through the kitchen.</p>
         </div>
         <div className="flex gap-2 items-center">
-          <Input type="date" value={batchDate} onChange={e => setBatchDate(e.target.value)} className="w-40" />
+          <Input type="date" value={batchDate} onChange={e => setBatchDate(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch (err) {} }} className="w-40" />
           <Button onClick={openCreateModal}><Plus className="h-4 w-4 mr-1" /> New Batch</Button>
         </div>
       </div>
