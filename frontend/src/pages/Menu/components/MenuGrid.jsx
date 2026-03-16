@@ -29,7 +29,7 @@ export default function MenuGrid({ items, isAdmin, onToggleAvailability, onEditC
           <CardContent className="flex-grow">
             {/* Empty content area stretching cards equally */}
           </CardContent>
-          <CardFooter className="pt-4 border-t bg-slate-50/50 flex justify-between items-center rounded-b-lg">
+          <CardFooter className="pt-4 border-t bg-slate-50/50 flex justify-between items-center ">
             
             <div className="flex items-center space-x-2">
               {isAdmin ? (

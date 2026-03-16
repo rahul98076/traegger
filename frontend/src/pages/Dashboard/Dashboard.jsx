@@ -53,8 +53,8 @@ export default function Dashboard() {
     return (
       <div className="p-8 flex items-center justify-center min-vh-100">
         <div className="flex flex-col items-center gap-2">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 font-medium">Crunching bakery numbers...</p>
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent  animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Crunching bakery numbers...</p>
         </div>
       </div>
     );
@@ -73,12 +73,12 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
             <LayoutDashboard className="h-8 w-8 text-blue-600" />
-            Bakery Dashboard
+            Bakery Dashboard 🥚🐰
           </h1>
           <div className="flex items-center gap-4 mt-1">
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-400 dark:text-slate-300">
               Welcome back, <span className="font-semibold text-slate-700">{user?.username}</span>.
             </p>
             <SyncBadge status={summary.firebase_sync_status} />
@@ -129,7 +129,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Trend */}
-        <Card className="lg:col-span-2 shadow-sm border-slate-200">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-500" />
@@ -162,7 +162,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Status Distribution */}
-        <Card className="shadow-sm border-slate-200">
+        <Card >
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -200,7 +200,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
-        <Card className="shadow-sm border-slate-200">
+        <Card >
           <CardHeader className="flex flex-row items-center justify-between py-4">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -221,13 +221,13 @@ export default function Dashboard() {
                   onClick={() => navigate(`/orders/${order.id}`)}
                 >
                   <div className="space-y-1">
-                    <p className="font-semibold text-slate-900">{order.customer_name}</p>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <p className="font-semibold text-slate-900 dark:text-slate-50">{order.customer_name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                       Order #{order.id} • Due {order.due_date}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <p className="font-bold text-slate-900">₹{order.total_price.toLocaleString()}</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-50">₹{order.total_price.toLocaleString()}</p>
                     <Badge variant="secondary" className="scale-90 origin-right capitalize">
                       {order.status}
                     </Badge>
@@ -235,14 +235,14 @@ export default function Dashboard() {
                 </div>
               ))}
               {summary.recent_orders.length === 0 && (
-                <div className="p-8 text-center text-slate-400">No orders yet. Start by creating one!</div>
+                <div className="p-8 text-center text-slate-400 dark:text-slate-300">No orders yet. Start by creating one!</div>
               )}
             </div>
           </CardContent>
         </Card>
 
         {/* Top Products */}
-        <Card className="shadow-sm border-slate-200">
+        <Card >
           <CardHeader className="py-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <UtensilsCrossed className="h-5 w-5 text-indigo-500" />
@@ -254,14 +254,14 @@ export default function Dashboard() {
             <div className="space-y-4">
               {summary.top_items.map((item, idx) => (
                 <div key={item.name} className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                  <div className="w-8 h-8  bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
                     {idx + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-slate-900">{item.name}</p>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                    <p className="font-medium text-slate-900 dark:text-slate-50">{item.name}</p>
+                    <div className="w-full bg-slate-100  h-1.5 mt-1">
                       <div 
-                        className="bg-indigo-500 h-1.5 rounded-full" 
+                        className="bg-indigo-500 h-1.5 " 
                         style={{ width: `${(item.quantity / summary.top_items[0].quantity) * 100}%` }}
                       />
                     </div>
@@ -270,7 +270,7 @@ export default function Dashboard() {
                 </div>
               ))}
               {summary.top_items.length === 0 && (
-                <div className="p-8 text-center text-slate-400">No sales data yet.</div>
+                <div className="p-8 text-center text-slate-400 dark:text-slate-300">No sales data yet.</div>
               )}
             </div>
           </CardContent>
@@ -293,15 +293,15 @@ function MetricCard({ title, value, icon, description, color = "bg-blue-50 text-
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-tight">{title}</p>
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">{value}</h2>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tight">{title}</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">{value}</h2>
           </div>
-          <div className={`p-3 rounded-xl border ${color}`}>
+          <div className={`p-3  border ${color}`}>
             {icon}
           </div>
         </div>
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs text-slate-400">{description}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-300">{description}</p>
           {trend && (
             <span className={`text-xs font-bold ${trendColor}`}>{trend}</span>
           )}
@@ -316,13 +316,13 @@ function SyncBadge({ status }) {
     synced: { color: "bg-emerald-50 border-emerald-100 text-emerald-600", label: "Live Cloud Synced" },
     syncing: { color: "bg-amber-50 border-amber-100 text-amber-600 animate-pulse", label: "Syncing to Cloud..." },
     error: { color: "bg-red-50 border-red-100 text-red-600 font-bold", label: "Sync Error" },
-    offline: { color: "bg-slate-50 border-slate-100 text-slate-500", label: "Sync Offline" }
+    offline: { color: "bg-slate-50 border-slate-100 text-slate-500 dark:text-slate-400 dark:text-slate-300", label: "Sync Offline" }
   };
   
   const config = configs[status] || configs.offline;
   
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${config.color} text-[10px] font-bold uppercase tracking-wider transition-all duration-500`}>
+    <div className={`flex items-center gap-1.5 px-2 py-0.5  border ${config.color} text-[10px] font-bold uppercase tracking-wider transition-all duration-500`}>
       <Cloud className={`h-3 w-3 ${status === 'syncing' ? 'animate-bounce' : ''}`} />
       {config.label}
     </div>

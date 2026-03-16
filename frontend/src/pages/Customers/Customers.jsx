@@ -91,7 +91,7 @@ export default function Customers() {
           <p className="text-slate-500">Manage your customer directory.</p>
         </div>
         <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <div className="flex items-center bg-slate-100 p-1 rounded-md border text-slate-500">
+          <div className="flex items-center bg-slate-100 p-1  border text-slate-500">
             <Button variant={viewMode === 'grid' ? "default" : "ghost"} size="sm" className="h-8 px-2" onClick={() => setViewMode('grid')} title="Grid View">
               <LayoutGrid className="h-4 w-4" />
             </Button>

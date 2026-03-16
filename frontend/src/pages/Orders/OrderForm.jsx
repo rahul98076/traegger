@@ -211,7 +211,7 @@ export default function OrderForm() {
                 onFocus={() => setShowCustomerDropdown(true)}
               />
               {showCustomerDropdown && filteredCustomers.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border  shadow-lg max-h-48 overflow-y-auto">
                   {filteredCustomers.map(c => (
                     <div
                       key={c.id}
@@ -268,7 +268,7 @@ export default function OrderForm() {
                 onFocus={() => setShowItemDropdown(true)}
               />
               {showItemDropdown && filteredMenuItems.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border  shadow-lg max-h-48 overflow-y-auto">
                   {filteredMenuItems.map(mi => (
                     <div
                       key={mi.id}
@@ -292,7 +292,7 @@ export default function OrderForm() {
             ) : (
               <div className="space-y-2">
                 {orderItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-md p-3 border">
+                  <div key={idx} className="flex items-center justify-between bg-slate-50  p-3 border">
                     <div className="flex-grow">
                       <p className="font-medium text-sm">{item.name}</p>
                       <p className="text-xs text-slate-500">{item.size_unit} · {formatPaiseToRupees(item.unit_price_paise)} each</p>
@@ -334,15 +334,24 @@ export default function OrderForm() {
               {discountType && (
                 <div>
                   <label className="text-sm font-medium block mb-1">
-                    {discountType === 'flat' ? 'Amount (paise)' : 'Percent (basis points, 100 = 1%)'}
+                    {discountType === 'flat' ? 'Amount (paise)' : 'Percent (e.g. 10)'}
                   </label>
-                  <Input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} placeholder="0" />
+                  <Input 
+                    type="number" 
+                    value={discountType === 'percent' && discountValue ? discountValue / 100 : discountValue} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setDiscountValue(''); return; }
+                      setDiscountValue(discountType === 'percent' ? String(Math.round(parseFloat(val) * 100)) : val);
+                    }} 
+                    placeholder="0" 
+                  />
                 </div>
               )}
             </div>
 
             {/* Totals preview */}
-            <div className="bg-slate-50 rounded-md p-4 space-y-1 text-sm">
+            <div className="bg-slate-50  p-4 space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><span className="font-medium">{formatPaiseToRupees(subtotal)}</span></div>
               {discountPaise > 0 && (
                 <div className="flex justify-between text-red-600"><span>Discount</span><span>-{formatPaiseToRupees(discountPaise)}</span></div>

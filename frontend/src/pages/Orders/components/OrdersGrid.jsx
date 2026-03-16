@@ -47,7 +47,7 @@ export default function OrdersGrid({ orders, onOrderClick }) {
             </p>
             <p className="text-xl font-bold mt-2">{formatPaiseToRupees(o.total_paise)}</p>
           </CardContent>
-          <CardFooter className="pt-3 border-t bg-slate-50/50 flex justify-between items-center rounded-b-lg">
+          <CardFooter className="pt-3 border-t bg-slate-50/50 flex justify-between items-center ">
             <Badge className={`${PAYMENT_COLORS[o.payment_status] || 'bg-slate-400'} text-white text-xs`}>
               {o.payment_status}
             </Badge>

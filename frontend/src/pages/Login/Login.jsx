@@ -46,7 +46,7 @@ export default function Login() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
       <Card className="w-full max-w-md shadow-lg border-2">
-        <CardHeader className="space-y-1 text-center bg-primary text-primary-foreground rounded-t-lg">
+        <CardHeader className="space-y-1 text-center bg-primary text-primary-foreground ">
           <CardTitle className="text-2xl font-bold tracking-wider">Penny's Cakes & More</CardTitle>
           <CardDescription className="text-primary-foreground/80">
             Internal Management Dashboard
@@ -92,7 +92,7 @@ export default function Login() {
                 id="remember" 
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="w-4 h-4  border-gray-300 text-primary focus:ring-primary"
               />
               <Label htmlFor="remember" className="font-normal cursor-pointer">Remember me</Label>
             </div>

@@ -75,11 +75,11 @@ export default function Orders() {
           <p className="text-slate-500">Track and manage customer orders.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-slate-100 p-1 rounded-md border text-slate-500">
-            <Button variant={viewMode === 'grid' ? "default" : "ghost"} size="sm" className="h-8 px-2" onClick={() => setViewMode('grid')} title="Grid View">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 border text-slate-500 dark:text-slate-300 dark:border-white">
+            <Button variant={viewMode === 'grid' ? "default" : "ghost"} size="sm" className="h-8 px-2 shadow-none dark:shadow-none hover:shadow-none" onClick={() => setViewMode('grid')} title="Grid View">
               <LayoutGrid className="h-4 w-4" />
             </Button>
-            <Button variant={viewMode === 'table' ? "default" : "ghost"} size="sm" className="h-8 px-2" onClick={() => setViewMode('table')} title="Table View">
+            <Button variant={viewMode === 'table' ? "default" : "ghost"} size="sm" className="h-8 px-2 shadow-none dark:shadow-none hover:shadow-none" onClick={() => setViewMode('table')} title="Table View">
               <List className="h-4 w-4" />
             </Button>
           </div>
@@ -105,10 +105,10 @@ export default function Orders() {
           </div>
           {/* Quick date buttons */}
           <div className="flex gap-1.5 flex-wrap">
-            <Button variant={dueDateFilter === today ? "default" : "outline"} size="sm" onClick={() => setDueDateFilter(dueDateFilter === today ? '' : today)}>
+            <Button variant={dueDateFilter === today ? "default" : "outline"} className="shadow-none dark:shadow-none hover:shadow-none" size="sm" onClick={() => setDueDateFilter(dueDateFilter === today ? '' : today)}>
               Today
             </Button>
-            <Button variant={dueDateFilter === tomorrow ? "default" : "outline"} size="sm" onClick={() => setDueDateFilter(dueDateFilter === tomorrow ? '' : tomorrow)}>
+            <Button variant={dueDateFilter === tomorrow ? "default" : "outline"} className="shadow-none dark:shadow-none hover:shadow-none" size="sm" onClick={() => setDueDateFilter(dueDateFilter === tomorrow ? '' : tomorrow)}>
               Tomorrow
             </Button>
             <Input type="date" value={dueDateFilter} onChange={(e) => setDueDateFilter(e.target.value)} className="w-36 h-8 text-sm" />

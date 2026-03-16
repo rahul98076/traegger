@@ -73,12 +73,12 @@ export default function Production() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg mb-6 w-fit">
+      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1  mb-6 w-fit">
         {TABS.map(t => (
           <Button
             key={t.key}
             variant={activeTab === t.key ? "default" : "ghost"}
-            size="sm"
+            size="sm" className="shadow-none dark:shadow-none hover:shadow-none"
             onClick={() => setActiveTab(t.key)}
           >
             {t.label}

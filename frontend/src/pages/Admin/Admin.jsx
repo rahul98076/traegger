@@ -156,7 +156,7 @@ export default function AdminSettings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg bg-slate-50 flex flex-col items-center text-center space-y-3">
+                <div className="p-4 border bg-slate-50 dark:bg-slate-900 dark:border-slate-700 flex flex-col items-center text-center space-y-3">
                   <Download className="h-10 w-10 text-blue-500" />
                   <div className="space-y-1">
                     <p className="font-semibold">Export Database</p>
@@ -164,7 +164,7 @@ export default function AdminSettings() {
                   </div>
                   <Button variant="outline" className="w-full" onClick={handleExport}>Download JSON</Button>
                 </div>
-                <div className="p-4 border rounded-lg bg-slate-50 flex flex-col items-center text-center space-y-3">
+                <div className="p-4 border bg-slate-50 dark:bg-slate-900 dark:border-slate-700 flex flex-col items-center text-center space-y-3">
                   <Upload className="h-10 w-10 text-amber-500" />
                   <div className="space-y-1">
                     <p className="font-semibold">Restore Data</p>
@@ -192,9 +192,9 @@ export default function AdminSettings() {
               <CardDescription>Monitor and manage real-time synchronization to Firestore.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border ">
                 <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center ${syncing ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                  <div className={`h-12 w-12  flex items-center justify-center ${syncing ? 'bg-amber-100' : 'bg-emerald-100'}`}>
                     <Cloud className={`h-6 w-6 ${syncing ? 'text-amber-600 animate-pulse' : 'text-emerald-600'}`} />
                   </div>
                   <div>
@@ -235,9 +235,9 @@ function UsersTable({ users, loading, onRefresh }) {
   if (loading) return <div className="py-12 text-center text-slate-500">Loading user database...</div>;
 
   return (
-    <div className="rounded-md border">
+    <div className=" border">
       <table className="w-full text-sm text-left">
-        <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+        <thead className="text-xs text-slate-700 dark:text-slate-200 uppercase bg-slate-50 dark:bg-slate-900">
           <tr>
             <th className="px-6 py-3">User</th>
             <th className="px-6 py-3">Role</th>
@@ -247,9 +247,9 @@ function UsersTable({ users, loading, onRefresh }) {
         </thead>
         <tbody className="divide-y">
           {users.map((user) => (
-            <tr key={user.id} className="bg-white hover:bg-slate-50">
+            <tr key={user.id} className="dark:bg-slate-800 bg-white hover:bg-slate-50 dark:hover:bg-slate-700">
               <td className="px-6 py-4 font-medium flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                <div className="h-8 w-8  bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-200">
                   {user.username[0].toUpperCase()}
                 </div>
                 {user.username}

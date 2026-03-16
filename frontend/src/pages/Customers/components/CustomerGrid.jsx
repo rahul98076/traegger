@@ -37,7 +37,7 @@ export default function CustomerGrid({ customers, isAdmin, canEdit, onEditClick,
             {c.notes && <p className="text-xs text-slate-500 italic">{c.notes}</p>}
           </CardContent>
           {canEdit && (
-            <CardFooter className="pt-4 border-t bg-slate-50/50 flex justify-between items-center rounded-b-lg">
+            <CardFooter className="pt-4 border-t bg-slate-50/50 flex justify-between items-center ">
               <Button variant="outline" size="sm" onClick={() => onEditClick(c)}>Edit</Button>
               {isAdmin && c.is_active && (
                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => onDeactivateClick(c)}>

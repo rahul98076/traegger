@@ -16,7 +16,7 @@ export default function MenuTable({ items, isAdmin, onToggleAvailability, onEdit
   if (!items || items.length === 0) return <p className="text-slate-500 py-4">No items found.</p>;
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden">
+    <div className=" border bg-white overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50">

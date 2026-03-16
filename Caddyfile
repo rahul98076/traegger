@@ -1,0 +1,21 @@
+pennys.home:80, 192.168.0.111:80 {
+    # Proxy API requests to backend
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8000
+    }
+    
+    # Proxy Swagger docs to backend
+    handle /docs* {
+        reverse_proxy 127.0.0.1:8000
+    }
+    handle /openapi.json* {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    # Serve Static Frontend Files
+    handle {
+        root * /home/rahul/traegger/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
+}

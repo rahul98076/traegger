@@ -10,7 +10,7 @@ export default function CustomerTable({ customers, isAdmin, canEdit, onEditClick
   if (!customers || customers.length === 0) return <p className="text-slate-500 py-4">No customers found.</p>;
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden">
+    <div className=" border bg-white overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50">

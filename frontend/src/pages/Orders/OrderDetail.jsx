@@ -153,7 +153,7 @@ export default function OrderDetail() {
                 {canEdit && <ChevronDown className="h-3 w-3" />}
               </Badge>
               {showStatusMenu && canEdit && (
-                <div className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg min-w-[140px]">
+                <div className="absolute z-10 mt-1 bg-white border  shadow-lg min-w-[140px]">
                   {STATUS_OPTIONS.map(s => (
                     <div key={s} className="px-3 py-1.5 text-sm hover:bg-slate-100 cursor-pointer capitalize"
                       onClick={() => handleStatusChange(s)}
@@ -232,7 +232,7 @@ export default function OrderDetail() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-lg">Items</CardTitle></CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-hidden">
+            <div className=" border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
@@ -330,7 +330,7 @@ export default function OrderDetail() {
                 <div className="relative pl-4 border-l-2 border-slate-100 space-y-6">
                   {auditLogs.map((log) => (
                     <div key={log.id} className="relative">
-                      <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-slate-200 border-2 border-white" />
+                      <div className="absolute -left-[21px] top-1 h-3 w-3  bg-slate-200 border-2 border-white" />
                       <div className="text-xs text-slate-400 mb-1">{log.timestamp} by {log.username}</div>
                       <div className="text-sm">
                         <span className="font-semibold capitalize">{log.action}:</span> {renderDiff(log)}

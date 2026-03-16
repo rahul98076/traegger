@@ -146,8 +146,8 @@ export default function Kitchen() {
           <span>{doneBatches.length} of {batches.length} batches assigned</span>
           <span>{progress}%</span>
         </div>
-        <div className="w-full bg-slate-200 rounded-full h-2.5">
-          <div className="bg-green-500 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
+        <div className="w-full bg-slate-200  h-2.5">
+          <div className="bg-green-500 h-2.5  transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
@@ -215,7 +215,7 @@ export default function Kitchen() {
               ) : (
                 <div className="space-y-2">
                   {productionItems.map(item => (
-                    <div key={item.menu_item_id} className="flex items-center justify-between p-3 border rounded-md hover:bg-slate-50">
+                    <div key={item.menu_item_id} className="flex items-center justify-between p-3 border  hover:bg-slate-50">
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-xs text-slate-500">{item.size_unit} · {item.total_quantity} needed</p>
@@ -249,7 +249,7 @@ export default function Kitchen() {
                     const batch = batches.find(b => b.id === showAssignModal);
                     const relevantItem = order.items?.find(i => i.menu_item_id === batch?.menu_item_id);
                     return (
-                      <div key={order.id} className="flex items-center justify-between p-3 border rounded-md">
+                      <div key={order.id} className="flex items-center justify-between p-3 border ">
                         <div>
                           <p className="font-medium">#{order.id} — {order.customer_name}</p>
                           <p className="text-xs text-slate-500">Needs {relevantItem?.quantity || '?'} · Due: {order.due_date}</p>
@@ -300,7 +300,7 @@ function BatchCard({ batch, expanded, logs, onToggle, onAdvance, onSetStage, onA
                 {batch.stage} <ChevronDown className="h-3 w-3" />
               </Badge>
               {showStages && (
-                <div className="absolute right-0 z-10 mt-1 bg-white border rounded-md shadow-lg min-w-[130px]">
+                <div className="absolute right-0 z-10 mt-1 bg-white border  shadow-lg min-w-[130px]">
                   {STAGES.map(s => (
                     <div key={s} className="px-3 py-1.5 text-sm hover:bg-slate-100 cursor-pointer capitalize"
                       onClick={() => { onSetStage(s); setShowStages(false); }}

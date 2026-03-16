@@ -114,7 +114,7 @@ export default function Menu() {
         </div>
         
         <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <div className="flex items-center bg-slate-100 p-1 rounded-md border text-slate-500">
+          <div className="flex items-center bg-slate-100 p-1  border text-slate-500">
             <Button 
                 variant={viewMode === 'grid' ? "default" : "ghost"} 
                 size="sm" 

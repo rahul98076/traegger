@@ -4,6 +4,7 @@ from fastapi import FastAPI, APIRouter, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.future import select
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from database import AsyncSessionLocal, get_db
 from models.user import User
 from routers import auth, users, menu, customers, orders, production, kitchen, dashboard, backup

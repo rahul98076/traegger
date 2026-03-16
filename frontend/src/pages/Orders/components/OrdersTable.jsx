@@ -24,7 +24,7 @@ export default function OrdersTable({ orders, onOrderClick }) {
   if (!orders || orders.length === 0) return <p className="text-slate-500 py-4">No orders found.</p>;
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden">
+    <div className=" border bg-white overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50">

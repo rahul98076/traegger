@@ -49,27 +49,27 @@ export default function AuditLog() {
     if (!diff) return null;
     return Object.entries(diff).map(([key, [oldVal, newVal]]) => (
       <div key={key} className="text-xs mt-1">
-        <span className="text-slate-500">{key.replace('_', ' ')}:</span>{" "}
-        {oldVal !== null && <span className="line-through text-slate-400 mr-1">{oldVal}</span>}
-        <span className="text-slate-900 font-medium">{newVal}</span>
+        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">{key.replace('_', ' ')}:</span>{" "}
+        {oldVal !== null && <span className="line-through text-slate-400 dark:text-slate-500 mr-1">{oldVal}</span>}
+        <span className="text-slate-900 dark:text-slate-100 font-medium">{newVal}</span>
       </div>
     ));
   };
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Loading audit trail...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400 dark:text-slate-500">Loading audit trail...</div>;
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <History className="h-6 w-6 text-slate-500" /> System Audit Trail
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <History className="h-6 w-6 text-slate-500 dark:text-slate-400 dark:text-slate-500" /> System Audit Trail
           </h1>
-          <p className="text-slate-500 text-sm">Monitor all changes across the system</p>
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm">Monitor all changes across the system</p>
         </div>
         
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <Input 
             placeholder="Search logs..." 
             className="pl-9"
@@ -84,12 +84,12 @@ export default function AuditLog() {
           <Card key={log.id} className="overflow-hidden border-slate-200 hover:border-slate-300 transition-colors">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
               <div className="flex items-center gap-3 flex-1">
-                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                <div className="h-8 w-8  bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
                   {log.username[0]?.toUpperCase()}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900">{log.username}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{log.username}</span>
                     <Badge variant="secondary" className={`${ACTION_COLORS[log.action]} border-none capitalize text-[10px] px-1.5 h-4`}>
                       {log.action}
                     </Badge>
@@ -97,23 +97,23 @@ export default function AuditLog() {
                       {log.entity_type} #{log.entity_id}
                     </Badge>
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500">
                     {new Date(log.timestamp).toLocaleString()}
                   </div>
                 </div>
               </div>
               
               <div className="flex-1 min-w-0 sm:pl-4 sm:border-l border-slate-100">
-                {renderDiff(log.diff) || <span className="text-xs text-slate-400 italic">No specific field changes recorded</span>}
+                {renderDiff(log.diff) || <span className="text-xs text-slate-400 dark:text-slate-500 italic">No specific field changes recorded</span>}
               </div>
             </div>
           </Card>
         ))}
 
         {filteredLogs.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border border-dashed border-slate-300">
+          <div className="text-center py-12 bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600">
             <History className="h-12 w-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-500">No audit logs found matching your search.</p>
+            <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">No audit logs found matching your search.</p>
           </div>
         )}
       </div>
