@@ -26,37 +26,36 @@ async def production_summary(
     _current_user=Depends(get_current_user),
 ):
     # Determine date range
-    today = date.today()
+    today_str = date.today().isoformat()
+    
+    filters = [
+        Order.status.in_(ACTIVE_STATUSES),
+        Order.is_deleted == 0,
+    ]
+    
     if date_filter:
-        start = end = date_filter
+        filters.append(Order.due_date == date_filter)
     elif range_from and range_to:
-        start, end = range_from, range_to
+        filters.append(Order.due_date >= range_from)
+        filters.append(Order.due_date <= range_to)
     elif range_preset == "tomorrow":
-        tomorrow = today + timedelta(days=1)
-        start = end = tomorrow.isoformat()
+        tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
+        filters.append(Order.due_date == tomorrow_str)
     elif range_preset == "week":
-        start = today.isoformat()
-        end = (today + timedelta(days=6)).isoformat()
+        week_str = (date.today() + timedelta(days=6)).isoformat()
+        filters.append(Order.due_date >= today_str)
+        filters.append(Order.due_date <= week_str)
+    elif range_preset == "upcoming":
+        filters.append(Order.due_date >= today_str)
     else:
-        # Default: today
-        start = end = today.isoformat()
+        # Default fallback
+        filters.append(Order.due_date >= today_str)
 
-    # Query orders in range with active statuses, not deleted
-    orders_q = await db.execute(
-        select(Order)
-        .where(
-            and_(
-                Order.due_date >= start,
-                Order.due_date <= end,
-                Order.status.in_(ACTIVE_STATUSES),
-                Order.is_deleted == 0,
-            )
-        )
-    )
+    orders_q = await db.execute(select(Order).where(and_(*filters)))
     orders = orders_q.scalars().all()
 
     if not orders:
-        return {"date_range": {"from": start, "to": end}, "items": []}
+        return {"days": []}
 
     order_ids = [o.id for o in orders]
     order_map = {o.id: o for o in orders}
@@ -77,30 +76,55 @@ async def production_summary(
     mi_q = await db.execute(select(MenuItem).where(MenuItem.id.in_(mi_ids)))
     mi_map = {m.id: m for m in mi_q.scalars().all()}
 
-    # Aggregate by menu_item_id
-    agg = {}  # menu_item_id -> { total_quantity, orders: [] }
+    # Aggregate by (due_date, menu_item_id)
+    date_agg = {}
     for oi in all_items:
-        key = oi.menu_item_id
-        if key not in agg:
-            mi = mi_map.get(key)
-            agg[key] = {
-                "menu_item_id": key,
-                "name": mi.name if mi else f"Item #{key}",
-                "size_unit": mi.size_unit if mi else "",
-                "is_available": bool(mi.is_available) if mi else True,
+        order = order_map.get(oi.order_id)
+        if not order: continue
+        d_date = order.due_date
+        
+        if d_date not in date_agg:
+            date_agg[d_date] = {}
+            
+        # Determine unique key for aggregation (Menu Item vs Custom Basket)
+        if oi.menu_item_id:
+            agg_key = f"mi_{oi.menu_item_id}"
+            mi = mi_map.get(oi.menu_item_id)
+            item_name = mi.name if mi else f"Item #{oi.menu_item_id}"
+            size_unit = mi.size_unit if mi else ""
+            is_available = bool(mi.is_available) if mi else True
+        else:
+            agg_key = f"custom_{oi.custom_name}"
+            item_name = oi.custom_name or "Unnamed Basket"
+            size_unit = "basket"
+            is_available = True
+            
+        if agg_key not in date_agg[d_date]:
+            date_agg[d_date][agg_key] = {
+                "key": agg_key,
+                "menu_item_id": oi.menu_item_id,
+                "name": item_name,
+                "size_unit": size_unit,
+                "is_available": is_available,
                 "total_quantity": 0,
                 "orders": [],
             }
-        agg[key]["total_quantity"] += oi.quantity
-        order = order_map.get(oi.order_id)
-        agg[key]["orders"].append({
+        
+        date_agg[d_date][agg_key]["total_quantity"] += oi.quantity
+        date_agg[d_date][agg_key]["orders"].append({
             "order_id": oi.order_id,
-            "customer_name": cust_map.get(order.customer_id, "Unknown") if order else "Unknown",
+            "customer_name": cust_map.get(order.customer_id, "Unknown"),
             "quantity": oi.quantity,
-            "due_date": order.due_date if order else "",
+            "due_date": d_date,
         })
 
-    # Sort by name
-    items_list = sorted(agg.values(), key=lambda x: x["name"])
+    # Format into list grouped by date
+    days_list = []
+    for d_date in sorted(date_agg.keys()):
+        items_list = sorted(date_agg[d_date].values(), key=lambda x: x["name"])
+        days_list.append({
+            "date": d_date,
+            "items": items_list
+        })
 
-    return {"date_range": {"from": start, "to": end}, "items": items_list}
+    return {"days": days_list}

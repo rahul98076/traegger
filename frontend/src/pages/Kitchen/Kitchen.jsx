@@ -80,7 +80,10 @@ export default function Kitchen() {
   const openCreateModal = async () => {
     try {
       const prod = await fetchProductionSummary({ date: batchDate });
-      setProductionItems(prod.items || []);
+      // The API now returns { days: [{ date, items: [] }] }
+      // We extract items for the selected batchDate
+      const dayData = prod.days?.find(d => d.date === batchDate);
+      setProductionItems(dayData?.items || []);
     } catch { setProductionItems([]); }
     setShowCreateModal(true);
   };

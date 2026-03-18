@@ -17,7 +17,6 @@ import useAuthStore from '@/store/authStore';
 import { toast } from 'sonner';
 
 const STATUS_COLORS = {
-  pending: '#94a3b8',    // slate-400
   confirmed: '#3b82f6',  // blue-500
   in_progress: '#f59e0b', // amber-500
   ready: '#10b981',      // emerald-500

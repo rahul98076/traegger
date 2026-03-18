@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const STATUS_OPTIONS = ['pending', 'confirmed', 'in_progress', 'ready', 'delivered', 'cancelled'];
+const STATUS_OPTIONS = ['confirmed', 'in_progress', 'ready', 'delivered', 'cancelled'];
 const STATUS_COLORS = {
-  pending: 'bg-slate-400', confirmed: 'bg-blue-500', in_progress: 'bg-amber-500',
+  confirmed: 'bg-blue-500', in_progress: 'bg-amber-500',
   ready: 'bg-green-500', delivered: 'bg-green-700', cancelled: 'bg-red-500',
 };
 const PAYMENT_COLORS = { unpaid: 'bg-red-500', partial: 'bg-amber-400', paid: 'bg-green-500' };
@@ -328,7 +328,7 @@ export default function OrderDetail() {
         )}
 
         {/* Section 6: Kitchen Status */}
-        {order.status !== 'pending' && order.status !== 'cancelled' && (
+        {order.status !== 'cancelled' && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Kitchen Status</CardTitle>

@@ -175,42 +175,82 @@ async def create_order(
         raise HTTPException(status_code=404, detail="Customer not found")
 
     # Build order items and calculate subtotal
-    async def build_order_item(item_in: OrderItemCreate):
+    subtotal = 0
+    top_level_items = []
+
+    def process_item_node(item_in: OrderItemCreate, parent_obj: Optional[OrderItem] = None):
+        nonlocal subtotal
         unit_price = item_in.unit_price_paise
         calc_basket_unit = 0
-        sub_objs = []
-        if item_in.sub_items:
-            for child_in in item_in.sub_items:
-                c_obj, c_line_tot = await build_order_item(child_in)
-                calc_basket_unit += c_line_tot
-                sub_objs.append(c_obj)
-            if unit_price is None:
-                unit_price = calc_basket_unit
-        elif unit_price is None and item_in.menu_item_id:
-            mi_result = await db.execute(select(MenuItem).where(MenuItem.id == item_in.menu_item_id))
-            mi = mi_result.scalar_one_or_none()
-            if not mi:
-               raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
-            unit_price = mi.price_paise
         
-        line_total = item_in.quantity * (unit_price or 0)
+        # Create the object first
         obj = OrderItem(
             menu_item_id=item_in.menu_item_id,
             custom_name=item_in.custom_name,
             quantity=item_in.quantity,
-            unit_price_paise=unit_price or 0,
-            line_total_paise=line_total,
+            # Placeholder for unit_price_paise, will update if basket
         )
-        if sub_objs:
-            obj.sub_items = sub_objs
-        return obj, line_total
+        
+        # Recursively process sub-items
+        if item_in.sub_items:
+            obj.sub_items = []
+            for child_in in item_in.sub_items:
+                c_obj, c_line_tot = process_item_node(child_in, parent_obj=obj)
+                calc_basket_unit += c_line_tot
+                obj.sub_items.append(c_obj)
+            if unit_price is None:
+                unit_price = calc_basket_unit
+        elif unit_price is None and item_in.menu_item_id:
+            # Note: This is a synchronous check against local cache or we might need to fetch
+            # But in the router, we should ideally fetch outside or use a dict mapping
+            pass
 
-    subtotal = 0
-    item_objects = []
+        obj.unit_price_paise = unit_price or 0
+        obj.line_total_paise = obj.quantity * obj.unit_price_paise
+        
+        if parent_obj is None:
+            subtotal += obj.line_total_paise
+            top_level_items.append(obj)
+        
+        return obj, obj.line_total_paise
+
+    # Prefetch menu items to avoid N+1 and async issues inside the tree builder
+    all_menu_item_ids = []
+    def collect_ids(items):
+        for i in items:
+            if i.menu_item_id: all_menu_item_ids.append(i.menu_item_id)
+            if i.sub_items: collect_ids(i.sub_items)
+    collect_ids(order_in.items)
+    
+    mi_map = {}
+    if all_menu_item_ids:
+        mi_res = await db.execute(select(MenuItem).where(MenuItem.id.in_(all_menu_item_ids)))
+        mi_map = {m.id: m for m in mi_res.scalars().all()}
+
+    def finalize_prices(item_in: OrderItemCreate, obj: OrderItem):
+        if obj.unit_price_paise == 0 and obj.menu_item_id and not item_in.sub_items:
+            mi = mi_map.get(obj.menu_item_id)
+            if mi:
+                obj.unit_price_paise = mi.price_paise
+                obj.line_total_paise = obj.quantity * obj.unit_price_paise
+
+    # Re-run the logic with proper price fetching
     for item_in in order_in.items:
-        obj, line_total = await build_order_item(item_in)
-        subtotal += line_total
-        item_objects.append(obj)
+        obj, _ = process_item_node(item_in)
+        # Finalize standalone or leaf prices
+        def walk_and_fix(node_in, node_obj):
+            finalize_prices(node_in, node_obj)
+            if node_obj.sub_items and node_in.sub_items:
+                # Recalculate basket price if it was 0
+                basket_price = 0
+                for c_in, c_obj in zip(node_in.sub_items, node_obj.sub_items):
+                    walk_and_fix(c_in, c_obj)
+                    basket_price += c_obj.line_total_paise
+                if node_in.unit_price_paise is None:
+                    node_obj.unit_price_paise = basket_price
+                    node_obj.line_total_paise = node_obj.quantity * node_obj.unit_price_paise
+
+        walk_and_fix(item_in, obj)
 
     discount_paise, total = _calc_totals(subtotal, order_in.discount_type, order_in.discount_value)
     pay_status = _derive_payment_status(total, order_in.amount_paid_paise)
@@ -231,12 +271,27 @@ async def create_order(
         internal_notes=order_in.internal_notes,
         created_by=current_user.id,
     )
-    new_order.items = item_objects
     db.add(new_order)
+    await db.flush() # Get order.id
+    
+    # Assign order_id and add items
+    all_final_items = []
+    def collect_and_bind(items):
+        for i in items:
+            i.order_id = new_order.id
+            all_final_items.append(i)
+            if i.sub_items:
+                collect_and_bind(i.sub_items)
+                
+    collect_and_bind(top_level_items)
+    for item in all_final_items:
+        db.add(item)
+    
     await db.flush()
+    
     await create_audit_log(
         db, current_user.id, "create", "order", new_order.id,
-        new_value={"total_paise": total, "status": "pending", "items_count": len(item_objects)}
+        new_value={"total_paise": total, "status": "confirmed", "items_count": len(top_level_items)}
     )
     await db.commit()
     await db.refresh(new_order)
@@ -307,42 +362,66 @@ async def update_order(
             await db.delete(old_item)
 
         subtotal = 0
+        top_level_items = []
+
+        # Prefetch menu items
+        all_menu_item_ids = []
+        def collect_ids(items):
+            for i in items:
+                if i.menu_item_id: all_menu_item_ids.append(i.menu_item_id)
+                if i.sub_items: collect_ids(i.sub_items)
+        collect_ids(order_in.items)
         
-        async def build_order_item(item_in: OrderItemCreate):
+        mi_map = {}
+        if all_menu_item_ids:
+            mi_res = await db.execute(select(MenuItem).where(MenuItem.id.in_(all_menu_item_ids)))
+            mi_map = {m.id: m for m in mi_res.scalars().all()}
+
+        def process_item_node(item_in: OrderItemCreate):
+            nonlocal subtotal
             unit_price = item_in.unit_price_paise
             calc_basket_unit = 0
-            sub_objs = []
-            if item_in.sub_items:
-                for child_in in item_in.sub_items:
-                    c_obj, c_line_tot = await build_order_item(child_in)
-                    calc_basket_unit += c_line_tot
-                    sub_objs.append(c_obj)
-                if unit_price is None:
-                    unit_price = calc_basket_unit
-            elif unit_price is None and item_in.menu_item_id:
-                mi_result = await db.execute(select(MenuItem).where(MenuItem.id == item_in.menu_item_id))
-                mi = mi_result.scalar_one_or_none()
-                if not mi:
-                   raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
-                unit_price = mi.price_paise
             
-            line_total = item_in.quantity * (unit_price or 0)
             obj = OrderItem(
-                order_id=order.id,
+                order_id=order_id,
                 menu_item_id=item_in.menu_item_id,
                 custom_name=item_in.custom_name,
                 quantity=item_in.quantity,
-                unit_price_paise=unit_price or 0,
-                line_total_paise=line_total,
             )
-            if sub_objs:
-                obj.sub_items = sub_objs
-            return obj, line_total
+            
+            if item_in.sub_items:
+                obj.sub_items = []
+                for child_in in item_in.sub_items:
+                    c_obj, c_line_tot = process_item_node(child_in)
+                    calc_basket_unit += c_line_tot
+                    obj.sub_items.append(c_obj)
+                if unit_price is None:
+                    unit_price = calc_basket_unit
+            elif unit_price is None and item_in.menu_item_id:
+                mi = mi_map.get(item_in.menu_item_id)
+                if mi:
+                    unit_price = mi.price_paise
+            
+            obj.unit_price_paise = unit_price or 0
+            obj.line_total_paise = obj.quantity * obj.unit_price_paise
+            return obj, obj.line_total_paise
 
         for item_in in order_in.items:
-            obj, line_total = await build_order_item(item_in)
-            subtotal += line_total
-            db.add(obj)
+            obj, l_tot = process_item_node(item_in)
+            subtotal += l_tot
+            top_level_items.append(obj)
+            
+        for item in top_level_items:
+            db.add(item)
+            # Recursively add children just in case, though cascade should handle it
+            def add_recursive(node):
+                if node.sub_items:
+                    for c in node.sub_items:
+                        db.add(c)
+                        add_recursive(c)
+            add_recursive(item)
+            
+        order.subtotal_paise = subtotal
             
         order.subtotal_paise = subtotal
 
@@ -544,12 +623,19 @@ async def duplicate_order(
             parent_obj = old_id_to_new_obj.get(oi.parent_item_id)
             if parent_obj:
                 new_child = OrderItem(
-                    menu_item_id=oi.menu_item_id, custom_name=oi.custom_name,
+                    order_id=new_order.id, menu_item_id=oi.menu_item_id, custom_name=oi.custom_name,
                     quantity=oi.quantity, unit_price_paise=oi.unit_price_paise, line_total_paise=oi.line_total_paise
                 )
                 if not parent_obj.sub_items:
                     parent_obj.sub_items = []
                 parent_obj.sub_items.append(new_child)
+                db.add(new_child) # Explicitly add to session
+    
+    await db.flush()
+    await create_audit_log(db, current_user.id, "duplicate", "order", new_order.id, new_value={"original_id": order_id})
+    await db.commit()
+    await db.refresh(new_order)
+    return await _build_response(new_order, db)
 
     await db.commit()
     await db.refresh(new_order)

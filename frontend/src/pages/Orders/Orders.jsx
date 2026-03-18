@@ -10,7 +10,7 @@ import { LayoutGrid, List, Search, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-const STATUS_OPTIONS = ['pending', 'confirmed', 'in_progress', 'ready', 'delivered', 'cancelled'];
+const STATUS_OPTIONS = ['confirmed', 'in_progress', 'ready', 'delivered', 'cancelled'];
 const PAYMENT_OPTIONS = ['unpaid', 'partial', 'paid'];
 
 export default function Orders() {

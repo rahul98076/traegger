@@ -9,7 +9,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
-    status = Column(String, nullable=False, default="pending")
+    status = Column(String, nullable=False, default="confirmed")
     order_date = Column(String, nullable=False, server_default=func.date("now"))
     due_date = Column(String, nullable=False)
     fulfillment_type = Column(String, nullable=False)

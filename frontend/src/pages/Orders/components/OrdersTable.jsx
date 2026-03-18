@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatPaiseToRupees } from '@/utils/formatters';
 
 const STATUS_COLORS = {
-  pending: 'bg-slate-400',
   confirmed: 'bg-blue-500',
   in_progress: 'bg-amber-500',
   ready: 'bg-green-500',
