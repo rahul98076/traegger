@@ -44,6 +44,7 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     unit_price_paise = Column(Integer, nullable=False)
     line_total_paise = Column(Integer, nullable=False)
+    status = Column(String, nullable=False, server_default="pending") # "pending", "ready"
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
 
     order = relationship("Order", back_populates="items")

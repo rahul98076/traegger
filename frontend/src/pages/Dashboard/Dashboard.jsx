@@ -83,12 +83,18 @@ export default function Dashboard() {
             <SyncBadge status={summary.firebase_sync_status} />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => navigate('/orders/new')} className="bg-blue-600 hover:bg-blue-700">
-            <PlusCircle className="mr-2 h-4 w-4" /> New Order
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => navigate('/orders/new')} 
+            className="bg-white text-black border-2 border-black rounded-none font-black uppercase tracking-tight shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-slate-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all px-6"
+          >
+            <PlusCircle className="mr-2 h-5 w-5" /> New Order
           </Button>
-          <Button variant="outline" onClick={() => navigate('/production')} className="bg-white">
-            <CalendarDays className="mr-2 h-4 w-4" /> Production
+          <Button 
+            onClick={() => navigate('/production')} 
+            className="bg-white text-black border-2 border-black rounded-none font-black uppercase tracking-tight shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-slate-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          >
+            <CalendarDays className="mr-2 h-5 w-5" /> Production
           </Button>
         </div>
       </div>

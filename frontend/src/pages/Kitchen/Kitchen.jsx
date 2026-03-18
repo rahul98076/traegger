@@ -1,393 +1,226 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchBatches, createBatch, updateBatchStage, assignBatch, getBatchLog } from '@/api/kitchen';
-import { fetchProductionSummary } from '@/api/production';
-import { fetchOrders } from '@/api/orders';
+import { fetchActiveOrders, updateItemStatus } from '@/api/kitchen';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  ChevronDown, ChevronUp, Plus, Play, Package, Clock, X,
-} from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Package, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
-const STAGES = ['queued', 'prepping', 'baking', 'cooling', 'decorating', 'packed', 'assigned'];
-const STAGE_COLORS = {
-  queued: 'bg-slate-400', prepping: 'bg-blue-500', baking: 'bg-amber-500',
-  cooling: 'bg-cyan-500', decorating: 'bg-purple-500', packed: 'bg-green-500', assigned: 'bg-green-700',
-};
-
 export default function Kitchen() {
-  const [batchDate, setBatchDate] = useState(new Date().toISOString().split('T')[0]);
-  const [batches, setBatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedBatch, setExpandedBatch] = useState(null);
-  const [batchLogs, setBatchLogs] = useState({});
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(null); // batch id
-  const [productionItems, setProductionItems] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [assignQuantities, setAssignQuantities] = useState({});
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [expandedOrders, setExpandedOrders] = useState({});
+  const [showCompleted, setShowCompleted] = useState(false);
 
-  const loadBatches = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await fetchBatches({ date: batchDate });
-      setBatches(data);
-    } catch { toast.error("Failed to load batches"); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { loadBatches(); }, [batchDate]);
-
-  const toggleExpand = async (batchId) => {
-    if (expandedBatch === batchId) {
-      setExpandedBatch(null);
-      return;
-    }
-    setExpandedBatch(batchId);
-    if (!batchLogs[batchId]) {
-      try {
-        const logs = await getBatchLog(batchId);
-        setBatchLogs(prev => ({ ...prev, [batchId]: logs }));
-      } catch { /* ignore */ }
+      const data = await fetchActiveOrders();
+      setOrders(data);
+    } catch (err) {
+      toast.error("Failed to load active orders");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAdvanceStage = async (batch) => {
-    const idx = STAGES.indexOf(batch.stage);
-    if (idx >= STAGES.length - 1) return;
+  useEffect(() => {
+    loadData();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleItemReady = async (itemId, currentStatus) => {
+    const newStatus = currentStatus === 'ready' ? 'pending' : 'ready';
     try {
-      await updateBatchStage(batch.id, { stage: STAGES[idx + 1] });
-      toast.success(`Stage → ${STAGES[idx + 1]}`);
-      loadBatches();
-      setBatchLogs(prev => ({ ...prev, [batch.id]: null })); // force reload
-    } catch (err) { toast.error("Failed to advance stage"); }
+      await updateItemStatus(itemId, newStatus);
+      // Optimistic update
+      setOrders(prev => prev.map(order => ({
+        ...order,
+        items: updateItemInHierarchy(order.items, itemId, newStatus),
+        ready_items: countReady(updateItemInHierarchy(order.items, itemId, newStatus))
+      })));
+      
+      // If everything is ready now, maybe we should refresh to see if order moved to ready
+      if (newStatus === 'ready') loadData(); 
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
-  const handleSetStage = async (batch, stage) => {
-    try {
-      await updateBatchStage(batch.id, { stage });
-      toast.success(`Stage → ${stage}`);
-      loadBatches();
-      setBatchLogs(prev => ({ ...prev, [batch.id]: null }));
-    } catch { toast.error("Failed to set stage"); }
+  const updateItemInHierarchy = (items, targetId, status) => {
+    return items.map(item => {
+      if (item.id === targetId) {
+        return { ...item, status, sub_items: item.sub_items.map(s => ({ ...s, status })) };
+      }
+      if (item.sub_items.length > 0) {
+        return { ...item, sub_items: updateItemInHierarchy(item.sub_items, targetId, status) };
+      }
+      return item;
+    });
   };
 
-  // Create batch modal
-  const openCreateModal = async () => {
-    try {
-      const prod = await fetchProductionSummary({ date: batchDate });
-      // The API now returns { days: [{ date, items: [] }] }
-      // We extract items for the selected batchDate
-      const dayData = prod.days?.find(d => d.date === batchDate);
-      setProductionItems(dayData?.items || []);
-    } catch { setProductionItems([]); }
-    setShowCreateModal(true);
+  const countReady = (items) => {
+    let count = 0;
+    items.forEach(i => {
+      if (i.status === 'ready') count++;
+      count += countReady(i.sub_items);
+    });
+    return count;
   };
 
-  const handleCreateBatch = async (menuItemId, qty) => {
-    try {
-      await createBatch({ menu_item_id: menuItemId, batch_date: batchDate, quantity: qty });
-      toast.success("Batch created");
-      setShowCreateModal(false);
-      loadBatches();
-    } catch (err) { toast.error("Failed to create batch"); }
+  const toggleOrderExpand = (orderId) => {
+    setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
   };
 
-  // Assign modal
-  const openAssignModal = async (batchId) => {
-    try {
-      const batch = batches.find(b => b.id === batchId);
-      const ordersData = await fetchOrders({ status: 'confirmed' });
-      // Filter orders that need this menu item
-      setOrders(ordersData.filter(o =>
-        o.items?.some(i => i.menu_item_id === batch?.menu_item_id)
-      ));
-    } catch { setOrders([]); }
-    setAssignQuantities({});
-    setShowAssignModal(batchId);
-  };
-
-  const handleAssign = async () => {
-    const assignments = Object.entries(assignQuantities)
-      .filter(([, qty]) => qty > 0)
-      .map(([orderId, quantity]) => ({ order_id: parseInt(orderId), quantity: parseInt(quantity) }));
-
-    if (assignments.length === 0) return toast.error("Select at least one order");
-    try {
-      await assignBatch(showAssignModal, { assignments });
-      toast.success("Assigned to orders");
-      setShowAssignModal(null);
-      loadBatches();
-    } catch { toast.error("Failed to assign"); }
-  };
-
-  // Stats
-  const activeBatches = batches.filter(b => b.stage !== 'assigned');
-  const doneBatches = batches.filter(b => b.stage === 'assigned');
-  const progress = batches.length ? Math.round((doneBatches.length / batches.length) * 100) : 0;
+  if (loading && orders.length === 0) {
+    return <div className="p-8 text-center text-xl font-black uppercase">Loading Kitchen Board...</div>;
+  }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto pb-24">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="p-4 md:p-8 max-w-2xl mx-auto pb-24 space-y-6">
+      <header className="mb-8 border-b-2 border-black pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Kitchen Tracker</h1>
-          <p className="text-slate-500">Track batch progress through the kitchen.</p>
+          <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Packing Station</h1>
+          <p className="font-bold text-slate-600 flex items-center gap-2">
+            <Clock className="w-4 h-4" /> {orders.filter(o => o.ready_items < o.total_items).length} PENDING · {orders.filter(o => o.ready_items >= o.total_items).length} DONE
+          </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <Input type="date" value={batchDate} onChange={e => setBatchDate(e.target.value)} onClick={(e) => { try { e.target.showPicker(); } catch (err) {} }} className="w-40" />
-          <Button onClick={openCreateModal}><Plus className="h-4 w-4 mr-1" /> New Batch</Button>
-        </div>
-      </div>
+        <Button 
+          variant={showCompleted ? "default" : "outline"}
+          onClick={() => setShowCompleted(!showCompleted)}
+          className="rounded-none border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-y-[1px] transition-all"
+        >
+          {showCompleted ? "Hide Done" : "Show Done"}
+        </Button>
+      </header>
 
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-slate-600 mb-1">
-          <span>{doneBatches.length} of {batches.length} batches assigned</span>
-          <span>{progress}%</span>
-        </div>
-        <div className="w-full bg-slate-200  h-2.5">
-          <div className="bg-green-500 h-2.5  transition-all" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading batches...</div>
-      ) : batches.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-slate-500">No batches for {batchDate}. Click "New Batch" to create one from the production plan.</CardContent></Card>
+      {orders.length === 0 ? (
+        <Card className="border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rounded-none">
+          <CardContent className="p-12 text-center">
+            <Package className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+            <p className="text-xl font-bold uppercase">All caught up!</p>
+            <p className="text-slate-500">New orders will appear here automatically.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6">
-          {/* Active batches */}
-          {activeBatches.length > 0 && (
-            <div className="space-y-3">
-              {activeBatches.map(batch => (
-                <BatchCard
-                  key={batch.id}
-                  batch={batch}
-                  expanded={expandedBatch === batch.id}
-                  logs={batchLogs[batch.id]}
-                  onToggle={() => toggleExpand(batch.id)}
-                  onAdvance={() => handleAdvanceStage(batch)}
-                  onSetStage={(stage) => handleSetStage(batch, stage)}
-                  onAssign={() => openAssignModal(batch.id)}
-                  navigate={navigate}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Done section */}
-          {doneBatches.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Done Today ({doneBatches.length})</h3>
-              <div className="space-y-2 opacity-60">
-                {doneBatches.map(batch => (
-                  <BatchCard
-                    key={batch.id}
-                    batch={batch}
-                    expanded={expandedBatch === batch.id}
-                    logs={batchLogs[batch.id]}
-                    onToggle={() => toggleExpand(batch.id)}
-                    onAdvance={() => {}}
-                    onSetStage={(stage) => handleSetStage(batch, stage)}
-                    onAssign={() => {}}
-                    navigate={navigate}
-                    isDone
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Create Batch Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Create Batch from Production Plan</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => setShowCreateModal(false)}><X className="h-4 w-4" /></Button>
-            </CardHeader>
-            <CardContent>
-              {productionItems.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No items in production plan for {batchDate}.</p>
-              ) : (
-                <div className="space-y-2">
-                  {productionItems.map(item => (
-                    <div key={item.menu_item_id} className="flex items-center justify-between p-3 border  hover:bg-slate-50">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-xs text-slate-500">{item.size_unit} · {item.total_quantity} needed</p>
-                      </div>
-                      <Button size="sm" onClick={() => handleCreateBatch(item.menu_item_id, item.total_quantity)}>
-                        <Plus className="h-3 w-3 mr-1" /> Create ({item.total_quantity})
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Assign Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Assign to Orders</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => setShowAssignModal(null)}><X className="h-4 w-4" /></Button>
-            </CardHeader>
-            <CardContent>
-              {orders.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No confirmed orders need this item.</p>
-              ) : (
-                <div className="space-y-3">
-                  {orders.map(order => {
-                    const batch = batches.find(b => b.id === showAssignModal);
-                    const relevantItem = order.items?.find(i => i.menu_item_id === batch?.menu_item_id);
-                    return (
-                      <div key={order.id} className="flex items-center justify-between p-3 border ">
-                        <div>
-                          <p className="font-medium">#{order.id} — {order.customer_name}</p>
-                          <p className="text-xs text-slate-500">Needs {relevantItem?.quantity || '?'} · Due: {order.due_date}</p>
-                        </div>
-                        <Input
-                          type="number"
-                          min="0"
-                          className="w-20"
-                          placeholder="Qty"
-                          value={assignQuantities[order.id] || ''}
-                          onChange={e => setAssignQuantities(prev => ({ ...prev, [order.id]: e.target.value }))}
-                        />
-                      </div>
-                    );
-                  })}
-                  <Button className="w-full mt-2" onClick={handleAssign}>Assign</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {orders
+            .filter(order => showCompleted || order.ready_items < order.total_items)
+            .map(order => (
+            <OrderCard 
+              key={order.id} 
+              order={order} 
+              isExpanded={!!expandedOrders[order.id]}
+              onToggleExpand={() => toggleOrderExpand(order.id)}
+              onToggleItem={toggleItemReady}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function BatchCard({ batch, expanded, logs, onToggle, onAdvance, onSetStage, onAssign, navigate, isDone }) {
-  const [showStages, setShowStages] = useState(false);
-  const nextStage = STAGES[STAGES.indexOf(batch.stage) + 1];
+function OrderCard({ order, isExpanded, onToggleExpand, onToggleItem }) {
+  const isAllReady = order.ready_items >= order.total_items;
 
   return (
-    <Card className="overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-slate-900">{batch.quantity}×</span>
-            <div>
-              <p className="font-semibold">{batch.menu_item_name}</p>
-              <p className="text-xs text-slate-500">{batch.menu_item_size_unit}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Badge
-                className={`${STAGE_COLORS[batch.stage] || 'bg-slate-400'} text-white cursor-pointer flex items-center gap-1`}
-                onClick={() => setShowStages(!showStages)}
-              >
-                {batch.stage} <ChevronDown className="h-3 w-3" />
-              </Badge>
-              {showStages && (
-                <div className="absolute right-0 z-10 mt-1 bg-white border  shadow-lg min-w-[130px]">
-                  {STAGES.map(s => (
-                    <div key={s} className="px-3 py-1.5 text-sm hover:bg-slate-100 cursor-pointer capitalize"
-                      onClick={() => { onSetStage(s); setShowStages(false); }}
-                    >
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-          <span>
-            <Clock className="h-3 w-3 inline mr-1" />
-            {batch.stage_updated_at}{batch.stage_updated_by_name ? ` by ${batch.stage_updated_by_name}` : ''}
-          </span>
-          {batch.total_assigned > 0 && (
-            <Badge variant="secondary" className="text-xs">{batch.total_assigned} assigned</Badge>
-          )}
-        </div>
-
-        {/* Action buttons */}
-        {!isDone && (
-          <div className="flex gap-2 flex-wrap">
-            {nextStage && (
-              <Button size="sm" onClick={onAdvance}>
-                <Play className="h-3 w-3 mr-1" /> {nextStage}
-              </Button>
-            )}
-            {batch.stage === 'packed' && (
-              <Button size="sm" variant="outline" onClick={onAssign} className="text-green-600">
-                <Package className="h-3 w-3 mr-1" /> Assign to Order
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Assignments list */}
-        {batch.assignments?.length > 0 && (
-          <div className="mt-3 border-t pt-2 space-y-1">
-            <p className="text-xs font-semibold text-slate-500 uppercase">Assigned to:</p>
-            {batch.assignments.map(a => (
-              <div key={a.id} className="flex justify-between text-sm py-0.5">
-                <span
-                  className="text-blue-600 hover:underline cursor-pointer"
-                  onClick={() => navigate(`/orders/${a.order_id}`)}
-                >
-                  Order #{a.order_id} {a.customer_name ? `— ${a.customer_name}` : ''}
-                </span>
-                <span className="text-slate-500">×{a.quantity}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Notes */}
-        {batch.notes && (
-          <p className="mt-2 text-sm text-slate-600 italic">📝 {batch.notes}</p>
-        )}
-      </div>
-
-      {/* Expandable stage log */}
-      <div
-        className="border-t px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-slate-50 text-sm text-slate-500"
-        onClick={onToggle}
+    <Card className={`border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rounded-none transition-all ${isAllReady ? 'bg-green-50' : 'bg-white'}`}>
+      <div 
+        className="p-4 cursor-pointer flex items-center justify-between"
+        onClick={onToggleExpand}
       >
-        <span>Stage History</span>
-        {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)]">#{order.id}</span>
+            <span className="font-black uppercase tracking-tight text-lg">{order.customer_name}</span>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase">
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {order.due_date}</span>
+            <span className="flex items-center gap-1"><Package className="w-3 h-3" /> {order.ready_items}/{order.total_items} READY</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isAllReady ? (
+            <Badge className="bg-green-500 text-white rounded-none border-2 border-black font-black uppercase px-2 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]">READY TO GO</Badge>
+          ) : (
+             <div className="w-20 h-5 border-2 border-black bg-slate-100 shadow-[2px_2px_0_0_rgba(0,0,0,1)] relative overflow-hidden">
+                <div 
+                  className="h-full bg-amber-400 transition-all border-r-2 border-black" 
+                  style={{ width: `${(order.ready_items / (order.total_items || 1)) * 100}%` }}
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black uppercase text-slate-700">
+                   {Math.round((order.ready_items / (order.total_items || 1)) * 100)}%
+                </span>
+             </div>
+          )}
+          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </div>
       </div>
-      {expanded && logs && (
-        <div className="bg-slate-50 px-4 py-2 space-y-1 text-xs border-t">
-          {logs.map(l => (
-            <div key={l.id} className="flex justify-between py-0.5">
-              <span>
-                {l.from_stage ? `${l.from_stage} → ` : ''}<strong>{l.to_stage}</strong>
-                {l.changed_by_name && <span className="text-slate-400 ml-1">by {l.changed_by_name}</span>}
-              </span>
-              <span className="text-slate-400">{l.changed_at}</span>
+
+      {isExpanded && (
+        <div className="border-t-2 border-black p-4 space-y-4 bg-slate-50">
+          <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+            <h4 className="text-xs font-black uppercase mb-3 text-slate-400 border-b border-slate-100 pb-1">Items Checklist</h4>
+            <div className="space-y-4">
+              {order.items.map(item => (
+                <ItemRow key={item.id} item={item} onToggle={onToggleItem} depth={0} />
+              ))}
             </div>
-          ))}
+          </div>
+          <div className="text-right">
+             <p className="text-[10px] font-bold text-slate-400 uppercase">Delivery Mode: {order.fulfillment_type}</p>
+          </div>
         </div>
       )}
     </Card>
+  );
+}
+
+function ItemRow({ item, onToggle, depth }) {
+  const hasSubItems = item.sub_items && item.sub_items.length > 0;
+  const isReady = item.status === 'ready';
+
+  return (
+    <div className={`space-y-2 ${depth > 0 ? 'ml-6 border-l-2 border-slate-200 pl-4' : ''}`}>
+      <div 
+        className={`flex items-start justify-between p-3 border-2 border-black transition-all cursor-pointer select-none
+          ${isReady ? 'bg-green-100 border-green-600' : 'bg-white hover:bg-slate-50'}
+          ${depth === 0 ? 'shadow-[2px_2px_0_0_rgba(0,0,0,1)]' : ''}
+        `}
+        onClick={() => onToggle(item.id, item.status)}
+      >
+        <div className="flex gap-3">
+          <div className="mt-0.5">
+            {isReady ? (
+              <CheckCircle2 className="w-6 h-6 text-green-600 fill-green-50" />
+            ) : (
+              <Circle className="w-6 h-6 text-black" />
+            )}
+          </div>
+          <div>
+            <p className={`font-black leading-tight uppercase ${isReady ? 'line-through text-green-700 opacity-50' : 'text-slate-900'}`}>
+              <span className="text-xl mr-2">{item.quantity}×</span> 
+              {item.name}
+            </p>
+            {hasSubItems && !isReady && (
+              <p className="text-[10px] font-black uppercase text-amber-600 mt-1 flex items-center gap-1">
+                <Package className="w-3 h-3" /> Includes {item.sub_items.length} items
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {hasSubItems && !isReady && (
+        <div className="space-y-2">
+          {item.sub_items.map(sub => (
+            <ItemRow key={sub.id} item={sub} onToggle={onToggle} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
