@@ -101,6 +101,3 @@ backend/traegger.db
 # Env
 .env
 .env.*
-
-# Git
-.github/*
