@@ -17,10 +17,16 @@ def set_sync_status(status: str):
     global _sync_status
     _sync_status = status
 
+import firebase_admin
+
 async def sync_to_firestore(entity_type: str, entity_id: int, data: dict):
     """
     Background task to sync an entity to Firestore.
     """
+    if not firebase_admin._apps:
+        set_sync_status("offline")
+        return
+        
     set_sync_status("syncing")
     try:
         db = firestore.client()
@@ -52,6 +58,10 @@ async def full_sync_to_firestore(db_session):
     Performs a full push of all local data to Firestore.
     Used for manual triggers and startup sync.
     """
+    if not firebase_admin._apps:
+        set_sync_status("offline")
+        return
+        
     from sqlalchemy.future import select
     from models.customer import Customer
     from models.menu_item import MenuItem

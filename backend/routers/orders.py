@@ -216,10 +216,12 @@ async def create_order(
     await db.refresh(new_order)
     
     # Sync to Firebase
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id))
+    _items_list = _items_res.scalars().all()
     items_data = [{
         "menu_item_id": i.menu_item_id, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
-    } for i in new_order.items]
+    } for i in _items_list]
     
     push_sync_task(background_tasks, "order", new_order.id, {
         "customer_id": new_order.customer_id,
@@ -321,10 +323,12 @@ async def update_order(
     await db.refresh(order)
     
     # Sync to Firebase
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == order.id))
+    _items_list = _items_res.scalars().all()
     items_data = [{
         "menu_item_id": i.menu_item_id, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
-    } for i in order.items]
+    } for i in _items_list]
     
     push_sync_task(background_tasks, "order", order.id, {
         "customer_id": order.customer_id,
@@ -489,10 +493,12 @@ async def duplicate_order(
     await db.refresh(new_order)
     
     # Sync to Firebase
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id))
+    _items_list = _items_res.scalars().all()
     items_data = [{
         "menu_item_id": i.menu_item_id, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
-    } for i in new_order.items]
+    } for i in _items_list]
     
     push_sync_task(background_tasks, "order", new_order.id, {
         "customer_id": new_order.customer_id,
