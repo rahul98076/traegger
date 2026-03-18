@@ -56,22 +56,32 @@ async def _build_response(order: Order, db: AsyncSession) -> dict:
     # Fetch items with menu item names
     items_result = await db.execute(
         select(OrderItem, MenuItem.name, MenuItem.size_unit)
-        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id, isouter=True)
         .where(OrderItem.order_id == order.id)
     )
-    items = []
+    items_map = {}
     for oi, mi_name, mi_size in items_result:
-        items.append(OrderItemResponse(
+        items_map[oi.id] = OrderItemResponse(
             id=oi.id,
             order_id=oi.order_id,
             menu_item_id=oi.menu_item_id,
+            custom_name=oi.custom_name,
+            parent_item_id=oi.parent_item_id,
             quantity=oi.quantity,
             unit_price_paise=oi.unit_price_paise,
             line_total_paise=oi.line_total_paise,
             menu_item_name=mi_name,
             menu_item_size_unit=mi_size,
             created_at=oi.created_at or "",
-        ))
+            sub_items=[]
+        )
+        
+    top_level_items = []
+    for oir in items_map.values():
+        if oir.parent_item_id and oir.parent_item_id in items_map:
+            items_map[oir.parent_item_id].sub_items.append(oir)
+        else:
+            top_level_items.append(oir)
 
     return OrderResponse(
         id=order.id,
@@ -97,7 +107,7 @@ async def _build_response(order: Order, db: AsyncSession) -> dict:
         created_by=order.created_by,
         created_at=order.created_at or "",
         updated_at=order.updated_at or "",
-        items=items,
+        items=top_level_items,
     )
 
 
@@ -165,26 +175,42 @@ async def create_order(
         raise HTTPException(status_code=404, detail="Customer not found")
 
     # Build order items and calculate subtotal
-    subtotal = 0
-    item_objects = []
-    for item_in in order_in.items:
-        # Get menu item price if not provided
+    async def build_order_item(item_in: OrderItemCreate):
         unit_price = item_in.unit_price_paise
-        if unit_price is None:
+        calc_basket_unit = 0
+        sub_objs = []
+        if item_in.sub_items:
+            for child_in in item_in.sub_items:
+                c_obj, c_line_tot = await build_order_item(child_in)
+                calc_basket_unit += c_line_tot
+                sub_objs.append(c_obj)
+            if unit_price is None:
+                unit_price = calc_basket_unit
+        elif unit_price is None and item_in.menu_item_id:
             mi_result = await db.execute(select(MenuItem).where(MenuItem.id == item_in.menu_item_id))
             mi = mi_result.scalar_one_or_none()
             if not mi:
-                raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
+               raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
             unit_price = mi.price_paise
-
-        line_total = item_in.quantity * unit_price
-        subtotal += line_total
-        item_objects.append(OrderItem(
+        
+        line_total = item_in.quantity * (unit_price or 0)
+        obj = OrderItem(
             menu_item_id=item_in.menu_item_id,
+            custom_name=item_in.custom_name,
             quantity=item_in.quantity,
-            unit_price_paise=unit_price,
+            unit_price_paise=unit_price or 0,
             line_total_paise=line_total,
-        ))
+        )
+        if sub_objs:
+            obj.sub_items = sub_objs
+        return obj, line_total
+
+    subtotal = 0
+    item_objects = []
+    for item_in in order_in.items:
+        obj, line_total = await build_order_item(item_in)
+        subtotal += line_total
+        item_objects.append(obj)
 
     discount_paise, total = _calc_totals(subtotal, order_in.discount_type, order_in.discount_value)
     pay_status = _derive_payment_status(total, order_in.amount_paid_paise)
@@ -216,10 +242,10 @@ async def create_order(
     await db.refresh(new_order)
     
     # Sync to Firebase
-    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id))
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id, OrderItem.parent_item_id == None))
     _items_list = _items_res.scalars().all()
     items_data = [{
-        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "menu_item_id": i.menu_item_id, "custom_name": i.custom_name, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
     } for i in _items_list]
     
@@ -281,23 +307,43 @@ async def update_order(
             await db.delete(old_item)
 
         subtotal = 0
-        for item_in in order_in.items:
+        
+        async def build_order_item(item_in: OrderItemCreate):
             unit_price = item_in.unit_price_paise
-            if unit_price is None:
+            calc_basket_unit = 0
+            sub_objs = []
+            if item_in.sub_items:
+                for child_in in item_in.sub_items:
+                    c_obj, c_line_tot = await build_order_item(child_in)
+                    calc_basket_unit += c_line_tot
+                    sub_objs.append(c_obj)
+                if unit_price is None:
+                    unit_price = calc_basket_unit
+            elif unit_price is None and item_in.menu_item_id:
                 mi_result = await db.execute(select(MenuItem).where(MenuItem.id == item_in.menu_item_id))
                 mi = mi_result.scalar_one_or_none()
                 if not mi:
-                    raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
+                   raise HTTPException(status_code=404, detail=f"Menu item {item_in.menu_item_id} not found")
                 unit_price = mi.price_paise
-            line_total = item_in.quantity * unit_price
-            subtotal += line_total
-            db.add(OrderItem(
+            
+            line_total = item_in.quantity * (unit_price or 0)
+            obj = OrderItem(
                 order_id=order.id,
                 menu_item_id=item_in.menu_item_id,
+                custom_name=item_in.custom_name,
                 quantity=item_in.quantity,
-                unit_price_paise=unit_price,
+                unit_price_paise=unit_price or 0,
                 line_total_paise=line_total,
-            ))
+            )
+            if sub_objs:
+                obj.sub_items = sub_objs
+            return obj, line_total
+
+        for item_in in order_in.items:
+            obj, line_total = await build_order_item(item_in)
+            subtotal += line_total
+            db.add(obj)
+            
         order.subtotal_paise = subtotal
 
     # Update discount
@@ -323,10 +369,10 @@ async def update_order(
     await db.refresh(order)
     
     # Sync to Firebase
-    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == order.id))
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == order.id, OrderItem.parent_item_id == None))
     _items_list = _items_res.scalars().all()
     items_data = [{
-        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "menu_item_id": i.menu_item_id, "custom_name": i.custom_name, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
     } for i in _items_list]
     
@@ -478,25 +524,41 @@ async def duplicate_order(
     db.add(new_order)
     await db.flush()
 
-    # Copy items
+    # Copy items directly handling parents then children
     items_result = await db.execute(select(OrderItem).where(OrderItem.order_id == order.id))
-    for oi in items_result.scalars().all():
-        db.add(OrderItem(
-            order_id=new_order.id,
-            menu_item_id=oi.menu_item_id,
-            quantity=oi.quantity,
-            unit_price_paise=oi.unit_price_paise,
-            line_total_paise=oi.line_total_paise,
-        ))
+    all_old_items = items_result.scalars().all()
+    
+    old_id_to_new_obj = {}
+    
+    for oi in all_old_items:
+        if oi.parent_item_id is None:
+            new_obj = OrderItem(
+                order_id=new_order.id, menu_item_id=oi.menu_item_id, custom_name=oi.custom_name,
+                quantity=oi.quantity, unit_price_paise=oi.unit_price_paise, line_total_paise=oi.line_total_paise
+            )
+            old_id_to_new_obj[oi.id] = new_obj
+            db.add(new_obj)
+            
+    for oi in all_old_items:
+        if oi.parent_item_id is not None:
+            parent_obj = old_id_to_new_obj.get(oi.parent_item_id)
+            if parent_obj:
+                new_child = OrderItem(
+                    menu_item_id=oi.menu_item_id, custom_name=oi.custom_name,
+                    quantity=oi.quantity, unit_price_paise=oi.unit_price_paise, line_total_paise=oi.line_total_paise
+                )
+                if not parent_obj.sub_items:
+                    parent_obj.sub_items = []
+                parent_obj.sub_items.append(new_child)
 
     await db.commit()
     await db.refresh(new_order)
     
     # Sync to Firebase
-    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id))
+    _items_res = await db.execute(select(OrderItem).where(OrderItem.order_id == new_order.id, OrderItem.parent_item_id == None))
     _items_list = _items_res.scalars().all()
     items_data = [{
-        "menu_item_id": i.menu_item_id, "quantity": i.quantity,
+        "menu_item_id": i.menu_item_id, "custom_name": i.custom_name, "quantity": i.quantity,
         "unit_price_paise": i.unit_price_paise, "line_total_paise": i.line_total_paise
     } for i in _items_list]
     

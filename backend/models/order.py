@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from database import Base
 
 
@@ -38,10 +38,13 @@ class OrderItem(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    menu_item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
+    menu_item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=True)
+    parent_item_id = Column(Integer, ForeignKey("order_items.id", ondelete="CASCADE"), nullable=True)
+    custom_name = Column(String, nullable=True)
     quantity = Column(Integer, nullable=False)
     unit_price_paise = Column(Integer, nullable=False)
     line_total_paise = Column(Integer, nullable=False)
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
 
     order = relationship("Order", back_populates="items")
+    sub_items = relationship("OrderItem", backref=backref("parent_item", remote_side=[id]), cascade="all, delete-orphan")

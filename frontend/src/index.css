@@ -22,27 +22,11 @@
     --brutal-shadow: #000000;
     --brutal-border: #000000;
   }
-
-  .dark {
-    --background: 240 10% 15%; /* dark slate almost black */
-    --foreground: 0 0% 100%;
-    --card: 240 10% 20%;
-    --card-foreground: 0 0% 100%;
-    --popover: 240 10% 20%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 24 9.8% 10%;
-    --border: 0 0% 100%; 
-    --input: 0 0% 100%;
-    --ring: 0 0% 100%;
-    --brutal-shadow: #000000; /* Shadows become white in dark mode */
-    --brutal-border: #ffffff;
-  }
 }
 
 @layer utilities {
   .card-brutal {
-    @apply border-2 border-black dark:border-white  bg-white dark:bg-slate-800 transition-all text-black dark:text-white;
+    @apply border-2 border-black bg-white transition-all text-black;
     box-shadow: 4px 4px 0 0 var(--brutal-shadow);
   }
   .card-brutal:hover {
@@ -50,7 +34,7 @@
     box-shadow: 6px 6px 0 0 var(--brutal-shadow);
   }
   .btn-brutal {
-    @apply border-2 border-black dark:border-white  font-bold transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-black dark:text-white bg-white dark:bg-slate-800;
+    @apply border-2 border-black font-bold transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-black bg-white;
     box-shadow: 4px 4px 0 0 var(--brutal-shadow);
   }
 }

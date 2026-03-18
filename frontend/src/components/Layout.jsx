@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import { 
   LayoutDashboard, ShoppingBag, Users, Clock, Settings, Package, 
-  UtensilsCrossed, Menu, X, LogOut, Moon, Sun, Rabbit
+  UtensilsCrossed, Menu, X, LogOut, Rabbit
 } from 'lucide-react';
 
 const navItems = [
@@ -18,26 +18,16 @@ const navItems = [
 export default function Layout({ children }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  const [isDark, setIsDark] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' ||
-      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
-
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
-
+    // Force cleanup the dark class injected by earlier DOM code
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }, []);
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -95,12 +85,6 @@ export default function Layout({ children }) {
           <span className="text-black dark:text-white">Penny's 🥕</span>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="p-2 border-2 border-black dark:border-white bg-white dark:bg-slate-800 active:translate-y-1 active:shadow-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] dark:shadow-[2px_2px_0_0_rgba(0,0,0,1)] relative z-10"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-white" /> : <Moon className="w-5 h-5 text-black" />}
-          </button>
           <button 
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className="p-2 border-2 border-black dark:border-white bg-white dark:bg-slate-800 active:translate-y-1 active:shadow-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] dark:shadow-[2px_2px_0_0_rgba(0,0,0,1)] relative z-10"
@@ -121,13 +105,6 @@ export default function Layout({ children }) {
             <h1 className="font-black text-2xl tracking-tight leading-tight text-black dark:text-white">Penny's <span className="text-xl">🐰</span></h1>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Bakery System</p>
           </div>
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="p-2 border-2 border-black dark:border-white bg-white dark:bg-slate-800 hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all relative z-10"
-            title="Toggle Dark Mode"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-white" /> : <Moon className="w-5 h-5 text-black" />}
-          </button>
         </div>
         <nav className="flex-1 py-4 relative">
           {navLinks}

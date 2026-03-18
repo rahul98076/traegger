@@ -256,17 +256,34 @@ export default function OrderDetail() {
                 </TableHeader>
                 <TableBody>
                   {order.items?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <span className="font-medium">{item.menu_item_name || `Item #${item.menu_item_id}`}</span>
-                        {item.menu_item_size_unit && (
-                          <span className="text-xs text-slate-500 ml-2">{item.menu_item_size_unit}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatPaiseToRupees(item.unit_price_paise)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatPaiseToRupees(item.line_total_paise)}</TableCell>
-                    </TableRow>
+                    <React.Fragment key={item.id}>
+                      <TableRow className={item.sub_items && item.sub_items.length > 0 ? "bg-slate-50" : ""}>
+                        <TableCell>
+                          <span className="font-medium">{item.custom_name || item.menu_item_name || `Item #${item.menu_item_id}`}</span>
+                          {item.sub_items && item.sub_items.length > 0 && (
+                             <Badge variant="secondary" className="ml-2 text-[10px] h-5 py-0 px-2 bg-purple-100 text-purple-700 hover:bg-purple-100">Custom Basket</Badge>
+                          )}
+                          {(!item.sub_items || item.sub_items.length === 0) && item.menu_item_size_unit && (
+                            <span className="text-xs text-slate-500 ml-2">{item.menu_item_size_unit}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{formatPaiseToRupees(item.unit_price_paise)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatPaiseToRupees(item.line_total_paise)}</TableCell>
+                      </TableRow>
+                      {item.sub_items && item.sub_items.map((sub) => (
+                         <TableRow key={sub.id} className="bg-slate-50/50">
+                           <TableCell className="pl-8 text-slate-600 py-2">
+                              <span className="text-xl leading-none text-slate-300 mr-2">↳</span>
+                              {sub.menu_item_name || `Item #${sub.menu_item_id}`}
+                              {sub.menu_item_size_unit && <span className="text-xs text-slate-400 ml-1">({sub.menu_item_size_unit})</span>}
+                           </TableCell>
+                           <TableCell className="text-center text-slate-600 py-2">{sub.quantity} <span className="text-[10px] text-slate-400">/basket</span></TableCell>
+                           <TableCell className="text-right text-slate-500 py-2">{formatPaiseToRupees(sub.unit_price_paise)}</TableCell>
+                           <TableCell className="text-right text-slate-500 py-2">{formatPaiseToRupees(sub.line_total_paise)}</TableCell>
+                         </TableRow>
+                      ))}
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>

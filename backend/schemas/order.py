@@ -5,21 +5,26 @@ from typing import Optional, List
 # --- Order Items ---
 
 class OrderItemCreate(BaseModel):
-    menu_item_id: int
+    menu_item_id: Optional[int] = None
+    custom_name: Optional[str] = None
     quantity: int
     unit_price_paise: Optional[int] = None  # auto-filled from menu if not provided
+    sub_items: Optional[List['OrderItemCreate']] = None
 
 
 class OrderItemResponse(BaseModel):
     id: int
     order_id: int
-    menu_item_id: int
+    menu_item_id: Optional[int] = None
+    custom_name: Optional[str] = None
+    parent_item_id: Optional[int] = None
     quantity: int
     unit_price_paise: int
     line_total_paise: int
     menu_item_name: Optional[str] = None
     menu_item_size_unit: Optional[str] = None
     created_at: str
+    sub_items: Optional[List['OrderItemResponse']] = None
 
     class Config:
         from_attributes = True
@@ -92,3 +97,10 @@ class OrderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+try:
+    OrderItemCreate.model_rebuild()
+    OrderItemResponse.model_rebuild()
+except AttributeError:
+    OrderItemCreate.update_forward_refs()
+    OrderItemResponse.update_forward_refs()

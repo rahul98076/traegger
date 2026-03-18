@@ -390,8 +390,9 @@ function DeletedOrdersTable() {
   const loadDeleted = async () => {
     try {
       setLoading(true);
-      const data = await fetchOrders({ status: 'deleted' });
-      setOrders(data);
+      const data = await fetchOrders({ include_deleted: true });
+      const deletedOnly = data.filter(o => o.is_deleted);
+      setOrders(deletedOnly);
     } catch (err) {
       toast.error("Failed to load deleted orders");
     } finally {
