@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import AuditLog from './AuditLog';
-import { fetchAuditLogs, forceFirebaseSync, exportDatabase, importDatabase } from '@/api/admin';
+import { fetchAuditLogs, forceFirebaseSync, exportDatabase, importDatabase, restoreFromCloud } from '@/api/admin';
 import { fetchAllUsers, updateUser, resetUserPassword, forceLogoutUser, createUser } from '@/api/users';
 import { fetchOrders, restoreOrder } from '@/api/orders';
 import useAuthStore from '@/store/authStore';
