@@ -39,11 +39,14 @@ export default function AuditLog() {
     loadLogs();
   }, []);
 
-  const filteredLogs = logs.filter(log => 
-    log.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = logs.filter(log => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (log.username || '').toLowerCase().includes(search) ||
+      (log.entity_type || '').toLowerCase().includes(search) ||
+      (log.action || '').toLowerCase().includes(search)
+    );
+  });
 
   const renderDiff = (diff) => {
     if (!diff) return null;
@@ -98,11 +101,11 @@ export default function AuditLog() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
               <div className="flex items-center gap-3 flex-1">
                 <div className="h-8 w-8  bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                  {log.username[0]?.toUpperCase()}
+                  {log.username ? log.username[0].toUpperCase() : '-'}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">{log.username}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{log.username || 'System'}</span>
                     <Badge variant="secondary" className={`${ACTION_COLORS[log.action]} border-none capitalize text-[10px] px-1.5 h-4`}>
                       {log.action}
                     </Badge>

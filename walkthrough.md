@@ -352,3 +352,30 @@ In this final phase, the application was deployed officially to the Ubuntu serve
 4. **Blank Audit Log**: Completely refactored `diff` dictionary serialization inside `AuditLog.jsx` to recursively type-check historical metadata formats and intercept functional map errors to stop the entire parent page from unmounting.
 5. **No Session Timeout**: Rewrote `auth_service.py` to strip out the standard 12 hour JWT validation threshold and extended `exp` token payloads to persist locally up to 100 years. User never needs to login again.
 6. **Git/CICD Cleanup**: Hard purged tracked/untracked intermediate artifacts (`*.pyc`, `__pycache__/`, loose `test_*` scripts) and appended defensive .gitignore rules protecting local SQLite indices and `.env` variable stores.
+
+## Phase 16: Local Testing Environment Setup
+
+### Overview
+In Phase 16, a robust local testing environment was configured to support a structured "test > fix > deploy" workflow, allowing development against a mirror of the production data schema.
+
+### Changes Made
+
+1. **Backend Initialization**
+   - Configured `.venv` virtual environment and installed all dependencies from `requirements.txt`.
+   - Setup an isolated `.env` supporting development overrides (`CORS_ORIGINS`, `DATABASE_URL`).
+   - Integrated the existing `traegger-c0901-firebase-adminsdk-fbsvc-e92b5c9c29.json` for live cloud sync capabilities.
+   - Built and applied `alembic upgrade head` resolving local database state.
+   - Created `seed.py` enabling explicit database injection of Menu structures and Admin identities locally.
+
+2. **Frontend Setup**
+   - Successfully bootstrapped dependencies using `pnpm install` establishing full SPA support inside Vite.
+
+3. **Automated Testing Suite (Pytest)**
+   - Initialized a `tests/` directory verifying application stability automatically.
+   - Built `test_auth.py` verifying JWT issuing flows and rejection thresholds.
+   - Built `test_api.py` validating core CRUD endpoints dynamically bypassing HTTP calls internally.
+   - Created `pytest.ini` supporting asynchronous session fixtures gracefully.
+
+### Validation Results
+- ✅ **Test Suite Success**: The internal API endpoints verified completely through automated `httpx` runners executing native `aiosqlite` read/writes.
+- ✅ **Environment Parity**: The system seamlessly mimics production without exposing or breaking the core production database locally.
