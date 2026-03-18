@@ -25,13 +25,25 @@ const PAYMENT_COLORS = { unpaid: 'bg-red-500', partial: 'bg-amber-400', paid: 'b
 
 const renderDiff = (log) => {
   if (!log.diff) return "No changes recorded";
-  return Object.entries(log.diff).map(([key, [oldVal, newVal]]) => (
-    <div key={key} className="mt-1">
-      <span className="text-slate-500">{key.replace('_', ' ')}:</span>{" "}
-      {oldVal !== null && <span className="line-through text-slate-400 mr-1">{oldVal}</span>}
-      <span className="text-slate-900 font-medium">{newVal}</span>
-    </div>
-  ));
+  try {
+    return Object.entries(log.diff).map(([key, val]) => {
+      let oldVal = null;
+      let newVal = val;
+      if (Array.isArray(val) && val.length === 2) {
+        oldVal = val[0];
+        newVal = val[1];
+      }
+      return (
+        <div key={key} className="mt-1 text-sm">
+          <span className="text-slate-500">{key.replace('_', ' ')}:</span>{" "}
+          {oldVal !== null && <span className="line-through text-slate-400 mr-1">{typeof oldVal === 'object' ? JSON.stringify(oldVal) : String(oldVal)}</span>}
+          <span className="text-slate-900 font-medium">{typeof newVal === 'object' ? JSON.stringify(newVal) : String(newVal)}</span>
+        </div>
+      );
+    });
+  } catch (e) {
+    return <div className="mt-1 text-red-500 text-sm">Error rendering changes</div>;
+  }
 };
 
 export default function OrderDetail() {
