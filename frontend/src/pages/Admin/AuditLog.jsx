@@ -47,13 +47,26 @@ export default function AuditLog() {
 
   const renderDiff = (diff) => {
     if (!diff) return null;
-    return Object.entries(diff).map(([key, [oldVal, newVal]]) => (
-      <div key={key} className="text-xs mt-1">
-        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">{key.replace('_', ' ')}:</span>{" "}
-        {oldVal !== null && <span className="line-through text-slate-400 dark:text-slate-500 mr-1">{oldVal}</span>}
-        <span className="text-slate-900 dark:text-slate-100 font-medium">{newVal}</span>
-      </div>
-    ));
+    try {
+      return Object.entries(diff).map(([key, val]) => {
+        let oldVal = null;
+        let newVal = val;
+        if (Array.isArray(val) && val.length === 2) {
+          oldVal = val[0];
+          newVal = val[1];
+        }
+        
+        return (
+          <div key={key} className="text-xs mt-1">
+            <span className="text-slate-500 dark:text-slate-400">{key.replace('_', ' ')}:</span>{" "}
+            {oldVal !== null && <span className="line-through text-slate-400 mr-1">{typeof oldVal === 'object' ? JSON.stringify(oldVal) : String(oldVal)}</span>}
+            <span className="text-slate-900 border-l px-1 ml-1 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 font-medium break-all">{typeof newVal === 'object' ? JSON.stringify(newVal) : String(newVal)}</span>
+          </div>
+        );
+      });
+    } catch(e) {
+      return <div className="text-xs text-red-500">Error rendering diff</div>;
+    }
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400 dark:text-slate-500">Loading audit trail...</div>;

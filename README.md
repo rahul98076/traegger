@@ -70,20 +70,38 @@ traegger/
 
 ---
 
-## 🛠️ Quick Start
+## 🛠️ Project Setup & Run Instructions
 
-### Backend Setup
-1. `cd backend`
-2. `python -m venv .venv`
-3. `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows)
-4. `pip install -r requirements.txt`
-5. Configure `.env` (refer to `.env.example` if available)
-6. `uvicorn main:app --reload`
+### 1. Backend Server
+The backend is a FastAPI application running on an asynchronous SQLite database.
 
-### Frontend Setup
-1. `cd frontend`
-2. `pnpm install`
-3. `pnpm dev`
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate      # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# Apply the latest database schemas
+alembic upgrade head
+
+# Seed default data (e.g. admin account) - Run only once!
+python seed_data.py
+
+# Start the API on http://localhost:8000
+uvicorn main:app --reload
+```
+
+### 2. Frontend Application
+The frontend is a Vite + React project.
+
+```bash
+cd frontend
+pnpm install
+
+# Start the Vite development server
+pnpm dev
+# App will be accessible at http://localhost:5173
+```
 
 ---
 

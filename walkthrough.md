@@ -333,3 +333,22 @@ In this final phase, the application was deployed officially to the Ubuntu serve
 - ✅ **Network Mapping**: Caddy executes reverse proxy rules simultaneously permitting interactions via `pennys.home` and `192.168.0.111`.
 - ✅ **Authentication Workflows**: Successfully demonstrated user verification processing seeded accounts validating the production DB mappings.
 - ✅ PWA definitions gracefully present allowing iOS / Android systems to install the site bypassing traditional browsers natively.
+
+### March 18, 2026 - Recent Fixes
+
+1. Fixed order submission bug (SQLAlchemy `MissingGreenlet` due to async lazy loading).
+2. Fixed Dashboard sync error by handling Firebase initialization fallback on missing config.
+3. Fixed blank `/admin` page due to missing import mapping in `Admin.jsx`.
+4. Defensively patched `AuditLog.jsx` rendering function to prevent malformed historical array data from breaking React components.
+5. Reconfigured `auth_service.py` to remove the 12-hour timeout. JWT expirations extended permanently to guarantee continuous offline availability.
+6. Ignored PyCache dynamically and scrubbed local untracked variables, , and artifacts for clean Git repo index setup.
+
+
+### March 18, 2026 - Recent Updates
+
+1. **Order Submission**: Fixed `MissingGreenlet` exceptions occurring implicitly from unawaited lazy-loading queries during order packaging over SQLAlchemy async db context.
+2. **Dashboard Sync**: Enforced runtime fallback state for `firebase_admin._apps` offline detection missing credentials to gracefully reconnect inside the sync loop.
+3. **Empty Admin Dash**: Injected missing `restoreFromCloud` imports into `Admin.jsx` component routing layout to properly mount.
+4. **Blank Audit Log**: Completely refactored `diff` dictionary serialization inside `AuditLog.jsx` to recursively type-check historical metadata formats and intercept functional map errors to stop the entire parent page from unmounting.
+5. **No Session Timeout**: Rewrote `auth_service.py` to strip out the standard 12 hour JWT validation threshold and extended `exp` token payloads to persist locally up to 100 years. User never needs to login again.
+6. **Git/CICD Cleanup**: Hard purged tracked/untracked intermediate artifacts (`*.pyc`, `__pycache__/`, loose `test_*` scripts) and appended defensive .gitignore rules protecting local SQLite indices and `.env` variable stores.
