@@ -1,0 +1,33 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Pull Latest Code, Build, and Restart Services
+        run: |
+          # 1. Enter the live production directory
+          cd /home/rahul/traegger
+          
+          # 2. Pull the latest commits from GitHub
+          git pull origin main
+
+          # 3. Build the React Frontend
+          cd frontend
+          pnpm install
+          pnpm build
+          
+          # 4. Migrate and Start the Backend
+          cd ../backend
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          alembic upgrade head
+          
+          # 5. Restart the Systemd Service
+          sudo /bin/systemctl restart pennys-backend
