@@ -28,3 +28,8 @@ export const restoreFromCloud = async () => {
   const response = await client.post('/admin/backup/cloud-restore');
   return response.data;
 };
+
+export const fetchErrorLogs = async (limit = 50, offset = 0) => {
+  const response = await client.get(`/admin/error-logs?limit=${limit}&offset=${offset}`);
+  return response.data;
+};

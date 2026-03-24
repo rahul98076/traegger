@@ -1,14 +1,17 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, APIRouter, Depends
+from fastapi import FastAPI, APIRouter, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.future import select
+import traceback
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import AsyncSessionLocal, get_db
 from models.user import User
 from routers import auth, users, menu, customers, orders, production, kitchen, dashboard, backup
 from models.audit_log import AuditLog
+from models.error_log import ErrorLog
 from services.auth_service import require_role, get_password_hash
 admin_only = require_role(["admin"])
 from seed_data import seed_menu
@@ -67,6 +70,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global exception handler — logs unhandled errors to error_logs table
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    try:
+        async with AsyncSessionLocal() as db:
+            log = ErrorLog(
+                level="ERROR",
+                method=request.method,
+                path=str(request.url.path),
+                status_code=500,
+                error_message=str(exc)[:1000],
+                traceback_text=tb[:5000],
+            )
+            db.add(log)
+            await db.commit()
+    except Exception as log_err:
+        print("ERROR_LOGGER: Failed to persist error:", log_err)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
+
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(menu.router, prefix="/api")
@@ -110,5 +136,39 @@ async def get_all_audit_logs(
             "username": username
         })
     return logs
+
+# Admin error logs endpoint
+@admin_router.get("/error-logs")
+async def get_error_logs(
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0,
+):
+    from sqlalchemy import desc
+    try:
+        result = await db.execute(
+            select(ErrorLog)
+            .order_by(desc(ErrorLog.id))
+            .offset(offset)
+            .limit(limit)
+        )
+        logs = result.scalars().all()
+        return [
+            {
+                "id": l.id,
+                "timestamp": l.timestamp,
+                "level": l.level,
+                "method": l.method,
+                "path": l.path,
+                "status_code": l.status_code,
+                "error_message": l.error_message,
+                "traceback_text": l.traceback_text,
+            }
+            for l in logs
+        ]
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise
 
 app.include_router(admin_router, prefix="/api")

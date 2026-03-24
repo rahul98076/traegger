@@ -41,6 +41,7 @@ class OrderItem(Base):
     menu_item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=True)
     parent_item_id = Column(Integer, ForeignKey("order_items.id", ondelete="CASCADE"), nullable=True)
     custom_name = Column(String, nullable=True)
+    custom_unit = Column(String, nullable=True)  # Override size_unit for basket sub-items (e.g. "piece")
     quantity = Column(Integer, nullable=False)
     unit_price_paise = Column(Integer, nullable=False)
     line_total_paise = Column(Integer, nullable=False)

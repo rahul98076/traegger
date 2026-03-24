@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Database, Cloud, History, Trash2, 
   Settings, UserPlus, ShieldAlert, LogOut, RefreshCw,
-  Download, Upload, Search, ShieldCheck, UserX, Key
+  Download, Upload, Search, ShieldCheck, UserX, Key, AlertTriangle
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import AuditLog from './AuditLog';
-import { fetchAuditLogs, forceFirebaseSync, exportDatabase, importDatabase, restoreFromCloud } from '@/api/admin';
+import { fetchAuditLogs, forceFirebaseSync, exportDatabase, importDatabase, restoreFromCloud, fetchErrorLogs } from '@/api/admin';
 import { fetchAllUsers, updateUser, resetUserPassword, forceLogoutUser, createUser } from '@/api/users';
 import { fetchOrders, restoreOrder } from '@/api/orders';
 import useAuthStore from '@/store/authStore';
@@ -136,6 +136,9 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="deleted" className="flex items-center gap-2 text-red-600">
             <Trash2 className="h-4 w-4" /> Deleted
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="flex items-center gap-2 text-amber-600">
+            <AlertTriangle className="h-4 w-4" /> Error Logs
           </TabsTrigger>
         </TabsList>
 
@@ -262,6 +265,10 @@ export default function AdminSettings() {
               <DeletedOrdersTable />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="errors" className="space-y-4">
+          <ErrorLogsPanel />
         </TabsContent>
       </Tabs>
     </div>
@@ -431,5 +438,79 @@ function DeletedOrdersTable() {
         )}
       </div>
     </div>
+  );
+}
+
+function ErrorLogsPanel() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const loadLogs = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchErrorLogs(100);
+      setLogs(data);
+    } catch (err) {
+      toast.error('Failed to load error logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div className="py-8 text-center text-slate-500 text-sm">Loading error logs...</div>;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle>Error Logs</CardTitle>
+          <CardDescription>Recent backend errors and exceptions. No SSH required.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={loadLogs}>
+          <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {logs.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 italic">No errors logged yet. That's a good thing! 🎉</div>
+        ) : (
+          <div className="space-y-2">
+            {logs.map(log => (
+              <div key={log.id} className="border rounded-none overflow-hidden">
+                <div 
+                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors ${
+                    log.status_code >= 500 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-amber-400'
+                  }`}
+                  onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                >
+                  <AlertTriangle className={`h-4 w-4 flex-shrink-0 ${log.status_code >= 500 ? 'text-red-500' : 'text-amber-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className={`text-[10px] rounded-none font-mono ${
+                        log.status_code >= 500 ? 'border-red-200 text-red-700 bg-red-50' : 'border-amber-200 text-amber-700 bg-amber-50'
+                      }`}>{log.status_code}</Badge>
+                      <span className="text-xs font-bold text-slate-500 uppercase">{log.method}</span>
+                      <span className="text-xs text-slate-600 font-mono truncate">{log.path}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 truncate">{log.error_message}</p>
+                  </div>
+                  <span className="text-[10px] text-slate-400 flex-shrink-0 whitespace-nowrap">{log.timestamp}</span>
+                </div>
+                {expandedId === log.id && log.traceback_text && (
+                  <div className="bg-slate-900 text-green-400 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto">
+                    {log.traceback_text}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

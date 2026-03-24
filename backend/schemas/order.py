@@ -7,6 +7,7 @@ from typing import Optional, List
 class OrderItemCreate(BaseModel):
     menu_item_id: Optional[int] = None
     custom_name: Optional[str] = None
+    custom_unit: Optional[str] = None  # Override size_unit (e.g. "piece")
     quantity: int
     unit_price_paise: Optional[int] = None  # auto-filled from menu if not provided
     sub_items: Optional[List['OrderItemCreate']] = None
@@ -17,6 +18,7 @@ class OrderItemResponse(BaseModel):
     order_id: int
     menu_item_id: Optional[int] = None
     custom_name: Optional[str] = None
+    custom_unit: Optional[str] = None
     parent_item_id: Optional[int] = None
     quantity: int
     unit_price_paise: int

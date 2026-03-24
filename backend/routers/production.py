@@ -91,12 +91,12 @@ async def production_summary(
             agg_key = f"mi_{oi.menu_item_id}"
             mi = mi_map.get(oi.menu_item_id)
             item_name = mi.name if mi else f"Item #{oi.menu_item_id}"
-            size_unit = mi.size_unit if mi else ""
+            size_unit = oi.custom_unit or (mi.size_unit if mi else "")
             is_available = bool(mi.is_available) if mi else True
         else:
             agg_key = f"custom_{oi.custom_name}"
             item_name = oi.custom_name or "Unnamed Basket"
-            size_unit = "basket"
+            size_unit = oi.custom_unit or "basket"
             is_available = True
             
         if agg_key not in date_agg[d_date]:

@@ -12,7 +12,7 @@ from models.customer import Customer
 from models.menu_item import MenuItem
 from models.user import User
 from schemas.order import (
-    OrderCreate, OrderUpdate, OrderResponse, OrderItemResponse,
+    OrderCreate, OrderItemCreate, OrderUpdate, OrderResponse, OrderItemResponse,
     OrderStatusUpdate, OrderPaymentUpdate,
 )
 from services.auth_service import require_role, get_current_user
@@ -66,12 +66,13 @@ async def _build_response(order: Order, db: AsyncSession) -> dict:
             order_id=oi.order_id,
             menu_item_id=oi.menu_item_id,
             custom_name=oi.custom_name,
+            custom_unit=oi.custom_unit,
             parent_item_id=oi.parent_item_id,
             quantity=oi.quantity,
             unit_price_paise=oi.unit_price_paise,
             line_total_paise=oi.line_total_paise,
             menu_item_name=mi_name,
-            menu_item_size_unit=mi_size,
+            menu_item_size_unit=oi.custom_unit or mi_size,
             created_at=oi.created_at or "",
             sub_items=[]
         )
@@ -187,6 +188,7 @@ async def create_order(
         obj = OrderItem(
             menu_item_id=item_in.menu_item_id,
             custom_name=item_in.custom_name,
+            custom_unit=item_in.custom_unit,
             quantity=item_in.quantity,
             # Placeholder for unit_price_paise, will update if basket
         )
@@ -386,6 +388,7 @@ async def update_order(
                 order_id=order_id,
                 menu_item_id=item_in.menu_item_id,
                 custom_name=item_in.custom_name,
+                custom_unit=item_in.custom_unit,
                 quantity=item_in.quantity,
             )
             

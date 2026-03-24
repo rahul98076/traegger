@@ -198,6 +198,7 @@ export default function OrderForm() {
         menu_item_id: mi.id,
         name: mi.name,
         size_unit: mi.size_unit,
+        custom_unit: mi.size_unit,
         quantity: 1,
         unit_price_paise: mi.price_paise,
       }]);
@@ -217,6 +218,19 @@ export default function OrderForm() {
     setBasketItems(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const updateBasketItemPrice = (idx, newPriceRupees) => {
+    const paise = Math.round((parseFloat(newPriceRupees) || 0) * 100);
+    setBasketItems(prev => prev.map((item, i) => 
+      i === idx ? { ...item, unit_price_paise: paise } : item
+    ));
+  };
+
+  const updateBasketItemUnit = (idx, newUnit) => {
+    setBasketItems(prev => prev.map((item, i) => 
+      i === idx ? { ...item, custom_unit: newUnit } : item
+    ));
+  };
+
   const saveBasketToOrder = () => {
     if (!basketName.trim()) return toast.error("Basket must have a name");
     if (basketItems.length === 0) return toast.error("Basket cannot be empty");
@@ -229,7 +243,7 @@ export default function OrderForm() {
       is_basket: true,
       quantity: 1,
       unit_price_paise: basketUnitPrice,
-      sub_items: basketItems
+      sub_items: basketItems.map(i => ({ ...i, custom_unit: i.custom_unit || i.size_unit }))
     }]);
     setIsBasketModalOpen(false);
   };
@@ -593,26 +607,50 @@ export default function OrderForm() {
                {basketItems.length > 0 && (
                  <div className="space-y-2 mt-4">
                    {basketItems.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-white p-2 border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-sm">
-                        <div className="flex-grow">
-                          <span className="font-medium text-slate-900">{item.name}</span>
-                          <span className="text-xs text-slate-600 ml-2">({item.size_unit})</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div className="flex items-center gap-1 border-2 border-black bg-slate-50">
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-none border-r-2 border-black hover:bg-slate-200" onClick={() => updateBasketItemQty(idx, -1)}><Minus className="h-3 w-3" /></Button>
-                              <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-none border-l-2 border-black hover:bg-slate-200" onClick={() => updateBasketItemQty(idx, 1)}><Plus className="h-3 w-3" /></Button>
-                           </div>
-                           <div className="w-16 text-right font-medium text-slate-800">
-                             {formatPaiseToRupees(item.quantity * item.unit_price_paise)}
+                       <div key={idx} className="bg-white p-3 border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-sm space-y-2">
+                         <div className="flex justify-between items-center">
+                           <div className="flex-grow">
+                             <span className="font-medium text-slate-900">{item.name}</span>
+                             <span className="text-xs text-slate-400 ml-2">({item.size_unit})</span>
                            </div>
                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-none text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => removeBasketItem(idx)}>
                               <Trash2 className="h-3 w-3" />
                            </Button>
-                        </div>
-                      </div>
-                   ))}
+                         </div>
+                         <div className="flex items-center gap-3 flex-wrap">
+                           <div className="flex items-center gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Qty</label>
+                             <div className="flex items-center border-2 border-black bg-slate-50">
+                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-none border-r-2 border-black hover:bg-slate-200" onClick={() => updateBasketItemQty(idx, -1)}><Minus className="h-3 w-3" /></Button>
+                               <span className="w-8 text-center text-xs font-bold">{item.quantity}</span>
+                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-none border-l-2 border-black hover:bg-slate-200" onClick={() => updateBasketItemQty(idx, 1)}><Plus className="h-3 w-3" /></Button>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Unit</label>
+                             <Input 
+                               value={item.custom_unit || ''}
+                               onChange={(e) => updateBasketItemUnit(idx, e.target.value)}
+                               className="h-7 w-24 text-xs border-2 border-black rounded-none px-2"
+                               placeholder="e.g. piece"
+                             />
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <label className="text-[10px] font-bold text-slate-400 uppercase">Price</label>
+                             <Input 
+                               type="number"
+                               step="0.01"
+                               value={(item.unit_price_paise / 100).toFixed(2)}
+                               onChange={(e) => updateBasketItemPrice(idx, e.target.value)}
+                               className="h-7 w-24 text-xs border-2 border-black rounded-none px-2 text-right"
+                             />
+                           </div>
+                           <div className="ml-auto font-bold text-slate-800 text-xs">
+                             = {formatPaiseToRupees(item.quantity * item.unit_price_paise)}
+                           </div>
+                         </div>
+                       </div>
+                    ))}
                    
                    <div className="flex justify-between items-center pt-3 mt-3 border-t">
                      <span className="font-semibold text-slate-700">Basket Unit Price:</span>
