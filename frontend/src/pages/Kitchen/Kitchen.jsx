@@ -82,7 +82,7 @@ export default function Kitchen() {
     <div className="p-4 md:p-8 max-w-2xl mx-auto pb-24 space-y-6">
       <header className="mb-8 border-b-2 border-black pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Packing Station</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Kitchen</h1>
           <p className="font-bold text-slate-600 flex items-center gap-2">
             <Clock className="w-4 h-4" /> {orders.filter(o => o.ready_items < o.total_items).length} PENDING · {orders.filter(o => o.ready_items >= o.total_items).length} DONE
           </p>
@@ -129,20 +129,20 @@ function OrderCard({ order, isExpanded, onToggleExpand, onToggleItem }) {
   return (
     <Card className={`border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rounded-none transition-all ${isAllReady ? 'bg-green-50' : 'bg-white'}`}>
       <div 
-        className="p-4 cursor-pointer flex items-center justify-between"
+        className="p-3 sm:p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0"
         onClick={onToggleExpand}
       >
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)]">#{order.id}</span>
-            <span className="font-black uppercase tracking-tight text-lg">{order.customer_name}</span>
+          <div className="flex items-start gap-2 mb-2">
+            <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)] mt-1 shrink-0">#{order.id}</span>
+            <span className="font-black uppercase tracking-tight text-lg leading-tight">{order.customer_name}</span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase">
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {order.due_date}</span>
-            <span className="flex items-center gap-1"><Package className="w-3 h-3" /> {order.ready_items}/{order.total_items} READY</span>
+          <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs font-bold text-slate-500 uppercase mt-1">
+            <span className="flex items-center gap-1 whitespace-nowrap"><Clock className="w-3 h-3" /> {order.due_date}</span>
+            <span className="flex items-center gap-1 whitespace-nowrap"><Package className="w-3 h-3" /> {order.ready_items}/{order.total_items} READY</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           {isAllReady ? (
             <Badge className="bg-green-500 text-white rounded-none border-2 border-black font-black uppercase px-2 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]">READY TO GO</Badge>
           ) : (
