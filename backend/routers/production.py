@@ -8,6 +8,7 @@ from sqlalchemy import and_
 from database import get_db
 from models.order import Order, OrderItem
 from models.menu_item import MenuItem
+from models.menu_item_constituent import MenuItemConstituent
 from models.customer import Customer
 from services.auth_service import get_current_user
 
@@ -55,7 +56,7 @@ async def production_summary(
     orders = orders_q.scalars().all()
 
     if not orders:
-        return {"days": []}
+        return {"days": [], "grand_totals": []}
 
     order_ids = [o.id for o in orders]
     order_map = {o.id: o for o in orders}
@@ -71,38 +72,35 @@ async def production_summary(
     )
     all_items = items_q.scalars().all()
 
-    # Fetch menu item info
-    mi_ids = list(set(oi.menu_item_id for oi in all_items))
-    mi_q = await db.execute(select(MenuItem).where(MenuItem.id.in_(mi_ids)))
+    # Load all constituents mapping
+    const_q = await db.execute(select(MenuItemConstituent))
+    all_constituents = const_q.scalars().all()
+    
+    # Map parent_id -> list of child_constituents
+    combo_map = {}
+    for c in all_constituents:
+        if c.parent_item_id not in combo_map:
+            combo_map[c.parent_item_id] = []
+        combo_map[c.parent_item_id].append(c)
+
+    # We also need to fetch MenuItems to get names of children if they weren't natively in the orders.
+    # To be safe, fetch ALL menu items into a dictionary
+    mi_q = await db.execute(select(MenuItem))
     mi_map = {m.id: m for m in mi_q.scalars().all()}
 
     # Aggregate by (due_date, menu_item_id)
     date_agg = {}
-    for oi in all_items:
-        order = order_map.get(oi.order_id)
-        if not order: continue
-        d_date = order.due_date
-        
+    grand_agg = {}
+
+    def track_item(d_date, agg_key, item_name, size_unit, is_available, qty, order_id, oi_menu_id):
+        # By Date aggregation
         if d_date not in date_agg:
             date_agg[d_date] = {}
-            
-        # Determine unique key for aggregation (Menu Item vs Custom Basket)
-        if oi.menu_item_id:
-            agg_key = f"mi_{oi.menu_item_id}"
-            mi = mi_map.get(oi.menu_item_id)
-            item_name = mi.name if mi else f"Item #{oi.menu_item_id}"
-            size_unit = oi.custom_unit or (mi.size_unit if mi else "")
-            is_available = bool(mi.is_available) if mi else True
-        else:
-            agg_key = f"custom_{oi.custom_name}"
-            item_name = oi.custom_name or "Unnamed Basket"
-            size_unit = oi.custom_unit or "basket"
-            is_available = True
             
         if agg_key not in date_agg[d_date]:
             date_agg[d_date][agg_key] = {
                 "key": agg_key,
-                "menu_item_id": oi.menu_item_id,
+                "menu_item_id": oi_menu_id,
                 "name": item_name,
                 "size_unit": size_unit,
                 "is_available": is_available,
@@ -110,13 +108,63 @@ async def production_summary(
                 "orders": [],
             }
         
-        date_agg[d_date][agg_key]["total_quantity"] += oi.quantity
+        date_agg[d_date][agg_key]["total_quantity"] += qty
         date_agg[d_date][agg_key]["orders"].append({
-            "order_id": oi.order_id,
-            "customer_name": cust_map.get(order.customer_id, "Unknown"),
-            "quantity": oi.quantity,
+            "order_id": order_id,
+            "customer_name": cust_map.get(order_map[order_id].customer_id, "Unknown"),
+            "quantity": qty,
             "due_date": d_date,
         })
+        
+        # Grand Aggregation
+        if agg_key not in grand_agg:
+            grand_agg[agg_key] = {
+                "key": agg_key,
+                "name": item_name,
+                "size_unit": size_unit,
+                "is_available": is_available,
+                "total_quantity": 0
+            }
+        grand_agg[agg_key]["total_quantity"] += qty
+
+    for oi in all_items:
+        order = order_map.get(oi.order_id)
+        if not order: continue
+        d_date = order.due_date
+        
+        # Determine if it's a fixed menu item
+        if oi.menu_item_id:
+            # Check if it has constituents
+            recipe = combo_map.get(oi.menu_item_id)
+            if recipe:
+                # It's a combo! Explode it into parts. (Parent disappears from kitchen view)
+                for child in recipe:
+                    child_mi = mi_map.get(child.child_item_id)
+                    child_qty = oi.quantity * child.quantity
+                    
+                    agg_key = f"mi_{child.child_item_id}"
+                    item_name = child_mi.name if child_mi else f"Item #{child.child_item_id}"
+                    size_unit = child_mi.size_unit if child_mi else ""
+                    is_available = bool(child_mi.is_available) if child_mi else True
+                    
+                    track_item(d_date, agg_key, item_name, size_unit, is_available, child_qty, oi.order_id, child.child_item_id)
+            else:
+                # Normal singular item
+                agg_key = f"mi_{oi.menu_item_id}"
+                mi = mi_map.get(oi.menu_item_id)
+                item_name = mi.name if mi else f"Item #{oi.menu_item_id}"
+                size_unit = oi.custom_unit or (mi.size_unit if mi else "")
+                is_available = bool(mi.is_available) if mi else True
+                
+                track_item(d_date, agg_key, item_name, size_unit, is_available, oi.quantity, oi.order_id, oi.menu_item_id)
+        else:
+            # Custom unmapped basket (cashier typed it natively)
+            agg_key = f"custom_{oi.custom_name}"
+            item_name = oi.custom_name or "Unnamed Basket"
+            size_unit = oi.custom_unit or "basket"
+            is_available = True
+            
+            track_item(d_date, agg_key, item_name, size_unit, is_available, oi.quantity, oi.order_id, None)
 
     # Format into list grouped by date
     days_list = []
@@ -126,5 +174,8 @@ async def production_summary(
             "date": d_date,
             "items": items_list
         })
+        
+    # Format global totals
+    grand_totals_list = sorted(grand_agg.values(), key=lambda x: x["total_quantity"], reverse=True)
 
-    return {"days": days_list}
+    return {"days": days_list, "grand_totals": grand_totals_list}

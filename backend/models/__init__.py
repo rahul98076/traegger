@@ -5,3 +5,4 @@ from .order import Order, OrderItem
 from .kitchen import KitchenBatch, KitchenBatchOrderAssignment, KitchenStageLog
 from .audit_log import AuditLog
 from .error_log import ErrorLog
+from .menu_item_constituent import MenuItemConstituent

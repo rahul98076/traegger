@@ -5,7 +5,12 @@ from sqlalchemy.future import select
 
 from database import get_db
 from models.menu_item import MenuItem
-from schemas.menu_item import MenuItemResponse, MenuItemCreate, MenuItemUpdate, MenuItemAvailabilityUpdate
+from models.menu_item_constituent import MenuItemConstituent
+from schemas.menu_item import (
+    MenuItemResponse, MenuItemCreate, MenuItemUpdate, 
+    MenuItemAvailabilityUpdate, MenuItemConstituentCreate, 
+    MenuItemConstituentResponse
+)
 from services.auth_service import require_role, get_current_user
 from services.audit_service import create_audit_log
 from services.firebase_sync import push_sync_task
@@ -131,3 +136,81 @@ async def toggle_availability(
     })
     
     return item
+
+@router.get("/{item_id}/constituents", response_model=List[MenuItemConstituentResponse])
+async def get_constituents(item_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(MenuItemConstituent, MenuItem.name)
+        .join(MenuItem, MenuItemConstituent.child_item_id == MenuItem.id)
+        .where(MenuItemConstituent.parent_item_id == item_id)
+    )
+    constituents = []
+    for row in result:
+        const = row[0]
+        child_name = row[1]
+        constituents.append({
+            "parent_item_id": const.parent_item_id,
+            "child_item_id": const.child_item_id,
+            "quantity": const.quantity,
+            "child_item_name": child_name
+        })
+    return constituents
+
+@router.post("/{item_id}/constituents", response_model=MenuItemConstituentResponse, dependencies=[admin_only], status_code=status.HTTP_201_CREATED)
+async def add_constituent(
+    item_id: int, 
+    constituent_in: MenuItemConstituentCreate, 
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify child item exists
+    child_res = await db.execute(select(MenuItem).where(MenuItem.id == constituent_in.child_item_id))
+    child_item = child_res.scalar_one_or_none()
+    if not child_item:
+        raise HTTPException(status_code=404, detail="Child menu item not found")
+
+    # Check if already exists, if so update quantity
+    existing_res = await db.execute(
+        select(MenuItemConstituent)
+        .where(MenuItemConstituent.parent_item_id == item_id, MenuItemConstituent.child_item_id == constituent_in.child_item_id)
+    )
+    existing = existing_res.scalar_one_or_none()
+    
+    if existing:
+        existing.quantity = constituent_in.quantity
+        await db.commit()
+        await db.refresh(existing)
+        return {
+            "parent_item_id": existing.parent_item_id,
+            "child_item_id": existing.child_item_id,
+            "quantity": existing.quantity,
+            "child_item_name": child_item.name
+        }
+    else:
+        new_const = MenuItemConstituent(
+            parent_item_id=item_id,
+            child_item_id=constituent_in.child_item_id,
+            quantity=constituent_in.quantity
+        )
+        db.add(new_const)
+        await db.commit()
+        await db.refresh(new_const)
+        return {
+            "parent_item_id": new_const.parent_item_id,
+            "child_item_id": new_const.child_item_id,
+            "quantity": new_const.quantity,
+            "child_item_name": child_item.name
+        }
+
+@router.delete("/{item_id}/constituents/{child_id}", dependencies=[admin_only])
+async def remove_constituent(item_id: int, child_id: int, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(
+        select(MenuItemConstituent)
+        .where(MenuItemConstituent.parent_item_id == item_id, MenuItemConstituent.child_item_id == child_id)
+    )
+    const = res.scalar_one_or_none()
+    if not const:
+        raise HTTPException(status_code=404, detail="Constituent not found")
+        
+    await db.delete(const)
+    await db.commit()
+    return {"ok": True}

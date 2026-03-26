@@ -179,6 +179,7 @@ export default function Menu() {
           onClose={() => setIsFormOpen(false)} 
           onSave={handleSaveItem} 
           editingItem={editingItem} 
+          allItems={items}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class MenuItemBase(BaseModel):
     name: str
@@ -26,6 +26,19 @@ class MenuItemResponse(MenuItemBase):
     id: int
     created_at: str
     updated_at: str
+    
+    class Config:
+        from_attributes = True
+
+class MenuItemConstituentCreate(BaseModel):
+    child_item_id: int
+    quantity: int
+
+class MenuItemConstituentResponse(BaseModel):
+    parent_item_id: int
+    child_item_id: int
+    quantity: int
+    child_item_name: Optional[str] = None
     
     class Config:
         from_attributes = True
