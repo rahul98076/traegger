@@ -137,10 +137,9 @@ export default function Production() {
                   </div>
                   <div className="flex-1 h-8 bg-slate-100 border border-black relative">
                     <div
-                      className="h-full bg-black transition-all flex items-center justify-end pr-2 overflow-hidden"
+                      className="h-full bg-amber-300 border-r-2 border-black transition-all overflow-hidden"
                       style={{ width: `${widthPct}%` }}
                     >
-                      <span className="text-white font-mono text-sm font-bold shadow-sm">{item.total_quantity}</span>
                     </div>
                   </div>
                   <div className="w-12 text-right hidden sm:block font-mono font-bold text-lg">
