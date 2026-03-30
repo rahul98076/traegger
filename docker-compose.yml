@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -11,7 +9,7 @@ services:
       - ./backend/.env
     environment:
       # Override the DB URL inside docker so data is mapped to the persistent volume
-      - DATABASE_URL=sqlite+aiosqlite:////data/traegger.db
+      - DATABASE_URL=sqlite+aiosqlite:///./pennys.db
     volumes:
       - traegger-db-data:/data
     networks:
@@ -32,6 +30,7 @@ services:
 
 volumes:
   traegger-db-data:
+
 
 networks:
   traegger-network:
