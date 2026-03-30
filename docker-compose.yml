@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: traegger_backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override the DB URL inside docker so data is mapped to the persistent volume
+      - DATABASE_URL=sqlite+aiosqlite:////data/traegger.db
+    volumes:
+      - traegger-db-data:/data
+    networks:
+      - traegger-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: traegger_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - traegger-network
+
+volumes:
+  traegger-db-data:
+
+networks:
+  traegger-network:
+    driver: bridge

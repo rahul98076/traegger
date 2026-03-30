@@ -379,3 +379,31 @@ In Phase 16, a robust local testing environment was configured to support a stru
 ### Validation Results
 - ✅ **Test Suite Success**: The internal API endpoints verified completely through automated `httpx` runners executing native `aiosqlite` read/writes.
 - ✅ **Environment Parity**: The system seamlessly mimics production without exposing or breaking the core production database locally.
+
+## Phase 17: Dockerization
+
+### Overview
+In Phase 17, the application was fully "dockerized" to simplify local development and deployment. This involved creating multi-stage Docker builds for the frontend and a production-ready container for the backend, orchestrated via Docker Compose.
+
+### Changes Made
+
+1. **Backend Dockerization**
+   - Created `backend/Dockerfile` using `python:3.11-slim`.
+   - Optimized for caching by installing requirements before copying source code.
+   - Configured to run `uvicorn` on port 8000.
+
+2. **Frontend Dockerization & Nginx**
+   - Created `frontend/Dockerfile` using a multi-stage build:
+     - **Stage 1 (Builder)**: Uses `node:20-slim` and `pnpm` to compile the React application.
+     - **Stage 2 (Server)**: Uses `nginx:alpine` to serve compiled static files.
+   - Created `frontend/nginx.conf` to handle SPA routing (`try_files`) and proxy `/api` requests to the backend container.
+
+3. **Orchestration (Docker Compose)**
+   - Created `docker-compose.yml` defining `frontend` and `backend` services.
+   - Configured a persistent volume `traegger-db-data` for the SQLite database.
+   - Set up an internal bridge network `traegger-network` for secure inter-container communication.
+   - Mapped host port 80 to the frontend container for easy access.
+
+### Validation Results
+- ✅ **Configuration Verified**: Docker Compose structure verified for correct volume mapping and service dependencies.
+- ✅ **Parity**: The Docker environment mimics the production Ubuntu/Caddy setup using a lightweight Nginx proxy.
