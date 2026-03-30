@@ -408,23 +408,6 @@ In Phase 17, the application was fully "dockerized" to simplify local developmen
 - ✅ **Configuration Verified**: Docker Compose structure verified for correct volume mapping and service dependencies.
 - ✅ **Parity**: The Docker environment mimics the production Ubuntu/Caddy setup using a lightweight Nginx proxy.
 
-## Phase 18: Tailscale & IP Migration (Pure Docker)
-
-### Overview
-In Phase 18, the application was transitioned from a "Hybrid" (Host Caddy + Docker) setup to a **"Pure Docker"** environment. This was specifically optimized for users without custom DNS routers who access the app via **Tailscale** or **LAN IP**.
-
-### Changes Made
-
-1. **DNS & Accessibility Optimization**
-   - Removed host-level dependencies (Systemd, Caddy on host).
-   - Configured `backend/.env` with `CORS_ORIGINS=*` to ensure accessibility from any Tailscale or LAN address.
-   - Optimized `frontend/nginx.conf` (within Docker) to handle all proxying and static serving.
-
-2. **Documentation Transformation**
-   - **Deployment Guide**: Rewrote `deployment_guide.md` to be a pure Docker execution guide, including Tailscale discovery commands (`tailscale ip -4`).
-   - **README**: Updated with "Pure Docker" as the primary setup method.
-
-3. **Cleanup**
    - Deleted the root-level `Caddyfile` as it was no longer required for the IP-based deployment.
 
 ### Validation Results
