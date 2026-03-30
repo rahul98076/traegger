@@ -10,24 +10,27 @@ jobs:
     runs-on: self-hosted
     
     steps:
-      - name: Pull Latest Code, Build, and Restart Services
+      - name: Stop, Pull, Move DB, and Restart services via Docker Compose
         run: |
           # 1. Enter the live production directory
           cd /home/rahul/traegger
           
-          # 2. Pull the latest commits from GitHub
+          # 2. Stop the old systemd service if it exists (for host-to-docker migration)
+          sudo systemctl stop pennys-backend || true
+          sudo systemctl disable pennys-backend || true
+          
+          # 3. Rename current DB file for the new structure (one-time migration check)
+          # Correcting: mv traegger.db to pennys.db if it exists in backend/
+          if [ -f backend/traegger.db ]; then
+            mv backend/traegger.db backend/pennys.db
+          fi
+          
+          # 4. Pull latest commits
           git pull origin main
 
-          # 3. Build the React Frontend
-          cd frontend
-          pnpm install
-          pnpm build
-          
-          # 4. Migrate and Start the Backend
-          cd ../backend
-          source .venv/bin/activate
-          pip install -r requirements.txt
-          alembic upgrade head
-          
-          # 5. Restart the Systemd Service
-          sudo /bin/systemctl restart pennys-backend
+          # 5. Build and deploy
+          docker compose build
+          #   Apply DB migrations via a temporary backend container
+          docker compose run --rm backend alembic upgrade head
+          #   Restart everything in background
+          docker compose up -d
