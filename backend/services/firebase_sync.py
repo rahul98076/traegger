@@ -73,21 +73,71 @@ async def full_sync_to_firestore(db_session):
         res = await db_session.execute(select(Customer))
         for c in res.scalars().all():
             await sync_to_firestore("customer", c.id, {
-                "name": c.name, "phone": c.phone, "email": c.email, "is_vip": c.is_vip, "is_active": c.is_active
+                "name": c.name,
+                "phone": c.phone,
+                "whatsapp": c.whatsapp,
+                "instagram": c.instagram,
+                "email": c.email,
+                "default_address": c.default_address,
+                "notes": c.notes,
+                "is_vip": c.is_vip,
+                "is_active": c.is_active,
+                "created_at": c.created_at,
+                "updated_at": c.updated_at
             })
             
         # 2. Menu Items
         res = await db_session.execute(select(MenuItem))
         for m in res.scalars().all():
             await sync_to_firestore("menu_item", m.id, {
-                "name": m.name, "price_paise": m.price_paise, "category": m.category, "is_available": m.is_available
+                "name": m.name,
+                "category": m.category,
+                "size_unit": m.size_unit,
+                "price_paise": m.price_paise,
+                "is_available": m.is_available,
+                "notes": m.notes,
+                "created_at": m.created_at,
+                "updated_at": m.updated_at
             })
             
         # 3. Orders
         res = await db_session.execute(select(Order).where(Order.is_deleted == 0))
         for o in res.scalars().all():
+            # Include Order Items in the sync for better recovery
+            items_data = []
+            for item in o.items:
+                items_data.append({
+                    "menu_item_id": item.menu_item_id,
+                    "parent_item_id": item.parent_item_id,
+                    "custom_name": item.custom_name,
+                    "custom_unit": item.custom_unit,
+                    "quantity": item.quantity,
+                    "unit_price_paise": item.unit_price_paise,
+                    "line_total_paise": item.line_total_paise,
+                    "status": item.status,
+                    "created_at": item.created_at
+                })
+
             await sync_to_firestore("order", o.id, {
-                "customer_id": o.customer_id, "total_paise": o.total_paise, "status": o.status, "due_date": o.due_date
+                "customer_id": o.customer_id,
+                "status": o.status,
+                "order_date": o.order_date,
+                "due_date": o.due_date,
+                "fulfillment_type": o.fulfillment_type,
+                "delivery_address": o.delivery_address,
+                "subtotal_paise": o.subtotal_paise,
+                "discount_type": o.discount_type,
+                "discount_value": o.discount_value,
+                "discount_paise": o.discount_paise,
+                "total_paise": o.total_paise,
+                "payment_status": o.payment_status,
+                "amount_paid_paise": o.amount_paid_paise,
+                "special_instructions": o.special_instructions,
+                "internal_notes": o.internal_notes,
+                "created_by": o.created_by,
+                "created_at": o.created_at,
+                "updated_at": o.updated_at,
+                "items": items_data
             })
             
         set_sync_status("synced")

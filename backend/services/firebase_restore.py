@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from firebase_admin import firestore
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -27,15 +28,21 @@ async def pull_from_firestore(db_session: AsyncSession):
             db_id = int(doc.id)
             
             await db_session.execute(text(
-                "INSERT INTO customers (id, name, phone, email, is_vip, is_active) "
-                "VALUES (:id, :name, :phone, :email, :is_vip, :is_active)"
+                "INSERT INTO customers (id, name, phone, whatsapp, instagram, email, default_address, notes, is_vip, is_active, created_at, updated_at) "
+                "VALUES (:id, :name, :phone, :whatsapp, :instagram, :email, :default_address, :notes, :is_vip, :is_active, :created_at, :updated_at)"
             ), {
                 "id": db_id,
                 "name": data.get("name", "Unknown"),
                 "phone": data.get("phone", ""),
+                "whatsapp": data.get("whatsapp", ""),
+                "instagram": data.get("instagram", ""),
                 "email": data.get("email", ""),
-                "is_vip": data.get("is_vip", False),
-                "is_active": data.get("is_active", True)
+                "default_address": data.get("default_address", ""),
+                "notes": data.get("notes", ""),
+                "is_vip": data.get("is_vip", 0),
+                "is_active": data.get("is_active", 1),
+                "created_at": data.get("created_at", datetime.utcnow().isoformat()),
+                "updated_at": data.get("updated_at", datetime.utcnow().isoformat())
             })
 
         # 2. Menu Items
@@ -45,14 +52,18 @@ async def pull_from_firestore(db_session: AsyncSession):
             db_id = int(doc.id)
             
             await db_session.execute(text(
-                "INSERT INTO menu_items (id, name, price_paise, category, is_available) "
-                "VALUES (:id, :name, :price_paise, :category, :is_available)"
+                "INSERT INTO menu_items (id, name, category, size_unit, price_paise, is_available, notes, created_at, updated_at) "
+                "VALUES (:id, :name, :category, :size_unit, :price_paise, :is_available, :notes, :created_at, :updated_at)"
             ), {
                 "id": db_id,
                 "name": data.get("name", "Unknown"),
-                "price_paise": data.get("price_paise", 0),
                 "category": data.get("category", "Uncategorized"),
-                "is_available": data.get("is_available", True)
+                "size_unit": data.get("size_unit", "unit"), # CRITICAL FIX: Fallback for missing field
+                "price_paise": data.get("price_paise", 0),
+                "is_available": data.get("is_available", 1),
+                "notes": data.get("notes", ""),
+                "created_at": data.get("created_at", datetime.utcnow().isoformat()),
+                "updated_at": data.get("updated_at", datetime.utcnow().isoformat())
             })
 
         # 3. Orders 
@@ -61,22 +72,32 @@ async def pull_from_firestore(db_session: AsyncSession):
             data = doc.to_dict()
             db_id = int(doc.id)
             
-            # Since the current sync doesn't push all order fields, we use fallbacks
             await db_session.execute(text(
-                "INSERT INTO orders (id, customer_id, total_paise, status, due_date, "
-                "fulfillment_type, payment_status, amount_paid_paise, is_deleted) "
-                "VALUES (:id, :customer_id, :total_paise, :status, :due_date, "
-                ":fulfillment_type, :payment_status, :amount_paid_paise, :is_deleted)"
+                "INSERT INTO orders (id, customer_id, status, order_date, due_date, fulfillment_type, delivery_address, subtotal_paise, discount_type, discount_value, discount_paise, total_paise, payment_status, amount_paid_paise, special_instructions, internal_notes, is_deleted, deleted_at, deleted_by, created_by, created_at, updated_at) "
+                "VALUES (:id, :customer_id, :status, :order_date, :due_date, :fulfillment_type, :delivery_address, :subtotal_paise, :discount_type, :discount_value, :discount_paise, :total_paise, :payment_status, :amount_paid_paise, :special_instructions, :internal_notes, :is_deleted, :deleted_at, :deleted_by, :created_by, :created_at, :updated_at)"
             ), {
                 "id": db_id,
                 "customer_id": data.get("customer_id"),
-                "total_paise": data.get("total_paise", 0),
-                "status": data.get("status", "pending"),
+                "status": data.get("status", "confirmed"),
+                "order_date": data.get("order_date", datetime.utcnow().date().isoformat()),
                 "due_date": data.get("due_date", "2026-01-01"),
                 "fulfillment_type": data.get("fulfillment_type", "pickup"),
+                "delivery_address": data.get("delivery_address", ""),
+                "subtotal_paise": data.get("subtotal_paise", 0),
+                "discount_type": data.get("discount_type", ""),
+                "discount_value": data.get("discount_value", 0),
+                "discount_paise": data.get("discount_paise", 0),
+                "total_paise": data.get("total_paise", 0),
                 "payment_status": data.get("payment_status", "unpaid"),
                 "amount_paid_paise": data.get("amount_paid_paise", 0),
-                "is_deleted": 0
+                "special_instructions": data.get("special_instructions", ""),
+                "internal_notes": data.get("internal_notes", ""),
+                "is_deleted": data.get("is_deleted", 0),
+                "deleted_at": data.get("deleted_at", None),
+                "deleted_by": data.get("deleted_by", None),
+                "created_by": data.get("created_by", 1), # Fallback to admin id 1
+                "created_at": data.get("created_at", datetime.utcnow().isoformat()),
+                "updated_at": data.get("updated_at", datetime.utcnow().isoformat())
             })
             
             # Restore Order Items
@@ -84,14 +105,19 @@ async def pull_from_firestore(db_session: AsyncSession):
                 items = data.get("items", [])
                 for idx, item in enumerate(items):
                     await db_session.execute(text(
-                        "INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price_paise, line_total_paise) "
-                        "VALUES (:order_id, :menu_item_id, :quantity, :unit_price_paise, :line_total_paise)"
+                        "INSERT INTO order_items (order_id, menu_item_id, parent_item_id, custom_name, custom_unit, quantity, unit_price_paise, line_total_paise, status, created_at) "
+                        "VALUES (:order_id, :menu_item_id, :parent_item_id, :custom_name, :custom_unit, :quantity, :unit_price_paise, :line_total_paise, :status, :created_at)"
                     ), {
                         "order_id": db_id,
                         "menu_item_id": item.get("menu_item_id"),
+                        "parent_item_id": item.get("parent_item_id", None),
+                        "custom_name": item.get("custom_name", None),
+                        "custom_unit": item.get("custom_unit", None),
                         "quantity": item.get("quantity", 1),
                         "unit_price_paise": item.get("unit_price_paise", 0),
-                        "line_total_paise": item.get("line_total_paise", 0)
+                        "line_total_paise": item.get("line_total_paise", 0),
+                        "status": item.get("status", "pending"),
+                        "created_at": item.get("created_at", datetime.utcnow().isoformat())
                     })
             except Exception as item_err:
                 logger.error(f"Failed reversing items for order {db_id}: {item_err}")
