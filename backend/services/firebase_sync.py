@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from firebase_admin import firestore
+from sqlalchemy.orm import selectinload
 from models.order import Order
 from models.customer import Customer
 from models.menu_item import MenuItem
@@ -101,7 +102,9 @@ async def full_sync_to_firestore(db_session):
             })
             
         # 3. Orders
-        res = await db_session.execute(select(Order).where(Order.is_deleted == 0))
+        res = await db_session.execute(
+            select(Order).where(Order.is_deleted == 0).options(selectinload(Order.items))
+        )
         for o in res.scalars().all():
             # Include Order Items in the sync for better recovery
             items_data = []
