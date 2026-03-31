@@ -47,7 +47,7 @@ export default function Login() {
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
       <Card className="w-full max-w-md shadow-lg border-2">
         <CardHeader className="space-y-1 text-center bg-primary text-primary-foreground ">
-          <CardTitle className="text-2xl font-bold tracking-wider">Penny's Cakes & More</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-wider text-center">Traegger Bakery Dashboard</CardTitle>
           <CardDescription className="text-primary-foreground/80">
             Internal Management Dashboard
           </CardDescription>

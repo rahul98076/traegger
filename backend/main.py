@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="Penny's Bakery Dashboard API",
+    title="Traegger Bakery Dashboard API",
     version="1.0.0",
     lifespan=lifespan
 )

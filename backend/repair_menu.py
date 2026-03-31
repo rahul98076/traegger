@@ -31,6 +31,7 @@ MENU_SEED = [
     {"name": "Single Macaron",        "category": "gift_boxes_bakery",   "size_unit": "1 pc",       "price_paise": 7500, "is_available": 0},
     {"name": "Bottle Masala",         "category": "homemade",            "size_unit": "1/4 kg bottle", "price_paise": 50000},
     {"name": "Black Currant Wine",    "category": "homemade",            "size_unit": "1 litre",    "price_paise": 50000},
+    {"name": "Test Cookie",           "category": "other",               "size_unit": "100g",        "price_paise": 5000},
 ]
 
 def repair():
@@ -52,24 +53,24 @@ def repair():
         price = item["price_paise"]
         avail = item.get("is_available", 1)
 
-        # 1. Check if item exists with placeholder 'unit'
+        # 1. Precise match on name, category AND price to handle different sizes
         cursor.execute(
-            "SELECT id, size_unit FROM menu_items WHERE name = ? AND category = ?", 
-            (name, category)
+            "SELECT id, size_unit FROM menu_items WHERE name = ? AND category = ? AND price_paise = ?", 
+            (name, category, price)
         )
         existing = cursor.fetchall()
 
         if existing:
             for item_id, current_unit in existing:
-                if current_unit == 'unit' or not current_unit:
-                    print(f"Updating unit for '{name}' -> {unit}")
+                if current_unit != unit:
+                    print(f"Correcting unit for '{name}' to {unit}")
                     cursor.execute(
                         "UPDATE menu_items SET size_unit = ? WHERE id = ?",
                         (unit, item_id)
                     )
                     updated_count += 1
         else:
-            # 2. If it doesn't exist at all, insert it
+            # 2. If it doesn't exist, insert it
             print(f"Restoring missing item: '{name}' ({unit})")
             cursor.execute(
                 "INSERT INTO menu_items (name, category, size_unit, price_paise, is_available) VALUES (?, ?, ?, ?, ?)",

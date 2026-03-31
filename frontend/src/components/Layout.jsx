@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import { 
   LayoutDashboard, ShoppingBag, Users, Clock, Settings, Package, 
-  UtensilsCrossed, Menu, X, LogOut, Rabbit
+  UtensilsCrossed, Menu, X, LogOut, Cookie
 } from 'lucide-react';
 
 const navItems = [
@@ -35,8 +35,8 @@ export default function Layout({ children }) {
 
   const navLinks = (
     <div className="flex flex-col gap-2 p-4 relative">
-      <div className="absolute top-0 right-4 text-2xl animate-bounce" style={{animationDuration: '3s'}}>🥚</div>
-      <div className="absolute bottom-10 left-2 text-xl opacity-80" style={{animationDuration: '4s'}}>🌷</div>
+      <div className="absolute top-0 right-4 text-2xl animate-bounce" style={{animationDuration: '3s'}}>🥐</div>
+      <div className="absolute bottom-10 left-2 text-xl opacity-80" style={{animationDuration: '4s'}}>🥐</div>
       {navItems.map((item) => (
         <NavLink
           key={item.path}
@@ -80,9 +80,9 @@ export default function Layout({ children }) {
       <div className="lg:hidden fixed top-0 w-full bg-[#f4efeb] dark:bg-slate-900 border-b-2 border-black dark:border-white z-50 px-4 py-3 flex items-center justify-between shadow-sm transition-colors duration-200">
         <div className="font-black text-xl flex items-center gap-2">
           <div className="bg-pink-300 dark:bg-pink-500 p-2 border-2 border-black dark:border-white">
-            <Rabbit className="w-5 h-5 text-black" />
+            <Cookie className="w-5 h-5 text-black" />
           </div>
-          <span className="text-black dark:text-white">Penny's 🥕</span>
+          <span className="text-black dark:text-white">Traegger 🥐</span>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -99,10 +99,10 @@ export default function Layout({ children }) {
         <div className="p-6 border-b-2 border-black dark:border-white flex items-center gap-3 relative overflow-hidden">
           <div className="absolute right-[-10px] top-[-10px] opacity-20 text-6xl">🌸</div>
           <div className="bg-pink-300 dark:bg-pink-500 p-2.5 border-2 border-black dark:border-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative z-10">
-            <Rabbit className="w-6 h-6 text-black" />
+            <Cookie className="w-6 h-6 text-black" />
           </div>
           <div className="flex-1 relative z-10">
-            <h1 className="font-black text-2xl tracking-tight leading-tight text-black dark:text-white">Penny's <span className="text-xl">🐰</span></h1>
+            <h1 className="font-black text-2xl tracking-tight leading-tight text-black dark:text-white">Traegger <span className="text-xl">🥐</span></h1>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Bakery System</p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function Layout({ children }) {
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Navigation 🌸</p>
             </div>
             <nav className="flex-1 overflow-y-auto relative">
-              <div className="absolute top-4 right-4 text-3xl opacity-20">🥚</div>
+              <div className="absolute top-4 right-4 text-3xl opacity-20">🥐</div>
               {navLinks}
             </nav>
             <div className="p-4 border-t-2 border-black dark:border-white">
@@ -160,10 +160,10 @@ export default function Layout({ children }) {
       <main className="flex-1 flex flex-col max-w-full lg:max-w-[calc(100vw-18rem)] overflow-hidden bg-transparent">
         <div className="flex-1 overflow-y-auto w-full pt-16 lg:pt-0 p-4 lg:p-8 relative">
           <div className="fixed bottom-0 right-0 p-8 text-8xl opacity-10 pointer-events-none z-0 mix-blend-multiply dark:mix-blend-screen">
-            🐰
+            🥐
           </div>
           <div className="fixed top-20 right-20 text-6xl opacity-10 pointer-events-none z-0 mix-blend-multiply dark:mix-blend-screen rotate-12">
-            🥚
+            🥐
           </div>
           <div className="max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-10">
             {children}
