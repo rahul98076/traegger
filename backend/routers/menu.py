@@ -57,6 +57,7 @@ async def create_menu_item(
         "name": new_item.name,
         "price_paise": new_item.price_paise,
         "category": new_item.category,
+        "size_unit": new_item.size_unit,
         "is_available": new_item.is_available
     })
     
@@ -103,6 +104,7 @@ async def update_menu_item(
         "name": item.name,
         "price_paise": item.price_paise,
         "category": item.category,
+        "size_unit": item.size_unit,
         "is_available": item.is_available
     })
     
