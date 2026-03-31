@@ -4,6 +4,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatPaiseToRupees } from '@/utils/formatters';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const STATUS_COLORS = {
   confirmed: 'bg-blue-500',
@@ -19,7 +20,7 @@ const PAYMENT_COLORS = {
   paid: 'bg-green-500',
 };
 
-export default function OrdersTable({ orders, onOrderClick }) {
+export default function OrdersTable({ orders, onOrderClick, sortField, sortOrder, onSort }) {
   if (!orders || orders.length === 0) return <p className="text-slate-500 py-4">No orders found.</p>;
 
   return (
@@ -27,13 +28,43 @@ export default function OrdersTable({ orders, onOrderClick }) {
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50">
-            <TableHead className="w-16">#</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Due Date</TableHead>
+            <TableHead className="w-16 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('id')}>
+              <div className="flex items-center space-x-1">
+                <span>#</span>
+                {sortField === 'id' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('customer_name')}>
+              <div className="flex items-center space-x-1">
+                <span>Customer</span>
+                {sortField === 'customer_name' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('due_date')}>
+              <div className="flex items-center space-x-1">
+                <span>Due Date</span>
+                {sortField === 'due_date' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
             <TableHead>Items</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead className="text-center">Payment</TableHead>
-            <TableHead className="text-center">Status</TableHead>
+            <TableHead className="text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('total_paise')}>
+              <div className="flex items-center justify-end space-x-1">
+                <span>Total</span>
+                {sortField === 'total_paise' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
+            <TableHead className="text-center cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('payment_status')}>
+              <div className="flex items-center justify-center space-x-1">
+                <span>Payment</span>
+                {sortField === 'payment_status' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
+            <TableHead className="text-center cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => onSort('status')}>
+              <div className="flex items-center justify-center space-x-1">
+                <span>Status</span>
+                {sortField === 'status' && (sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+              </div>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

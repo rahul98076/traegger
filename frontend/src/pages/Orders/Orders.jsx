@@ -21,6 +21,8 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState([]);
   const [paymentFilter, setPaymentFilter] = useState([]);
   const [dueDateFilter, setDueDateFilter] = useState('');
+  const [sortField, setSortField] = useState('due_date');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const { user } = useAuthStore();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
@@ -61,6 +63,33 @@ export default function Orders() {
   const handleOrderClick = (order) => {
     navigate(`/orders/${order.id}`);
   };
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedOrders = React.useMemo(() => {
+    return [...orders].sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      // Handle nulls/undefined
+      if (valA === null || valA === undefined) valA = '';
+      if (valB === null || valB === undefined) valB = '';
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [orders, sortField, sortOrder]);
 
   // Quick date helpers
   const today = new Date().toISOString().split('T')[0];
@@ -141,9 +170,15 @@ export default function Orders() {
       {loading ? (
         <div className="p-8 text-center text-slate-500">Loading orders...</div>
       ) : viewMode === 'grid' ? (
-        <OrdersGrid orders={orders} onOrderClick={handleOrderClick} />
+        <OrdersGrid orders={sortedOrders} onOrderClick={handleOrderClick} />
       ) : (
-        <OrdersTable orders={orders} onOrderClick={handleOrderClick} />
+        <OrdersTable
+          orders={sortedOrders}
+          onOrderClick={handleOrderClick}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+        />
       )}
     </div>
   );
