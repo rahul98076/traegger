@@ -1,5 +1,16 @@
+# Traegger Deployment & Maintenance Guide
 
-## 🛠️ 3. Deployment Steps
+This guide covers the deployment, access, and maintenance of the Traegger system on your local or remote server.
+
+---
+
+## 1. Prerequisites
+- **Docker & Docker Compose** installed on the host.
+- **Tailscale** (optional, recommended for secure remote access).
+
+---
+
+## 2. Deployment Steps
 
 ### Step A: Pull the Latest Code
 ```bash
@@ -9,16 +20,15 @@ git pull
 
 ### Step B: Launch with Docker Compose
 ```bash
-# Start everything in the background
 docker compose up -d --build
 ```
-*Note: This will automatically build your frontend, start the backend, and set up a persistent volume for your database.*
+*This will build the frontend, start the backend, and initialize the persistent SQLite database volume.*
 
 ---
 
-## 🌐 4. How to Access
+## 3. How to Access
 
-Since `pennys.home` is not used in this setup, use your IPs:
+Access the system using the server's IP address:
 
 ### Via Tailscale (Remote/Mobile)
 1. Find your server's Tailscale IP: `tailscale ip -4`
@@ -30,18 +40,18 @@ Since `pennys.home` is not used in this setup, use your IPs:
 
 ---
 
-## 📦 5. Maintenance & Logs
+## 4. Maintenance & Logs
 
 - **Check logs**: `docker compose logs -f`
-- **Restart everything**: `docker compose restart`
-- **Stop everything**: `docker compose down`
+- **Restart services**: `docker compose restart`
+- **Stop services**: `docker compose down`
 - **Update the app**: `git pull && docker compose up -d --build`
 
 ---
 
-## ☁️ 6. Data Recovery
+## 5. Data Recovery
 
-If you need to restore your database from Firebase:
+If you need to restore your database from the cloud:
 1. Access the dashboard via your IP.
-2. Go to **Admin Settings > Backup & Restore**.
-3. Use the **"Restore from Cloud"** button.
+2. Navigate to **Admin Settings > Data**.
+3. Use the **"Restore from Cloud"** feature.

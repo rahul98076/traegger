@@ -1,67 +1,58 @@
-# Penny's Bakery Management System (Traegger)
+# Traegger 🥐
+### A Streamlined Bakery Management & ERP System
 
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
-![Status](https://img.shields.io/badge/status-Phase_18_Complete-success.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Status](https://img.shields.io/badge/Production-Ready-success.svg)
+![Deployment](https://img.shields.io/badge/Deployment-Docker-blue.svg)
 
-A professional, full-stack ERP and management solution tailored for artisanal bakeries. Designed for high reliability, local-first performance with cloud redundancy, and streamlined production workflows.
+Traegger is a full-stack management solution designed specifically for artisanal bakeries. It focuses on the transition from **customer orders** to **kitchen production**, ensuring that nothing is missed in the early morning rush.
 
 ---
 
-## 🚀 Key Features
+## ✨ Core Features
 
-### 🥧 Production & Kitchen (Phase 16-18)
-- **Intelligent Production Decomposition**: Automatically "explodes" complex combo items (like Gift Boxes) into their individual baking components for precise prep tracking.
-- **Pure Docker Deployment**: Zero-config setup for home servers using Docker Compose.
-- **Tailscale & Remote Access**: Optimized for access via **Tailscale** or local LAN IPs, bypassing the need for complex DNS configurations.
-- **Kitchen Tracker**: Real-time batch progression tracking (Queued -> Prepping -> Baking -> Cooling -> Ready).
+### 👨‍🍳 Production & Kitchen
+- **Smart Decomposition**: Complex combo items (like Gift Boxes) are automatically "exploded" into their constituent components (marzipan eggs, buns, etc.) for accurate baking totals.
+- **Live Progress Tracking**: Monitor batch stages in real-time: `Queued` → `Prepping` → `Baking` → `Cooling` → `Ready`.
+- **High-Contrast Dashboard**: Specifically designed for kitchen screens to provide clear, actionable "Grand Totals" for the day's bake.
 
-### 🛠️ Administrative & Security
-- **Advanced User Management**: Role-based access control, session versioning, and secure password resets.
-- **System Audit Trail**: Field-level change history for all primary entities.
-- **Redundancy & Backups**: One-click JSON database exports and Firebase Cloud Mirroring.
+### 🛡️ Data & Security
+- **Automated Redundancy**: Twice-daily automated backups of the SQLite database to local storage, a remote Windows PC, and Google Drive.
+- **Role-Based Access**: Secure administrative controls and audit trails for all order changes.
+- **Local-First Reliability**: Runs entirely on your local network (or via Tailscale) to ensure the bakery stays operational even if the internet goes down.
 
 ---
 
 ## 💻 Tech Stack
 
-### Backend
-- **Framework**: FastAPI (Python 3.11+)
-- **Database**: SQLite (Local) with SQLAlchemy (Asynchronous)
-- **Cloud Interface**: Firebase Admin SDK
-
-### Frontend
-- **Framework**: React 19 (Vite 6)
-- **Styling**: Tailwind CSS + shadcn/ui
-- **State Management**: Zustand
+- **Backend**: FastAPI (Python 3.11+) with Asynchronous SQLite (SQLAlchemy)
+- **Frontend**: React 19 (Vite 6) + Tailwind CSS & shadcn/ui
+- **Infrastructure**: Pure Docker Compose deployment
 
 ---
 
-## 🛠️ Project Setup & Run Instructions
+## 🚀 Getting Started
 
-### 🐳 Option 1: Docker (Recommended for Deployment)
-The easiest way to run the whole stack is using Docker Compose. This is optimized for **Tailscale** and **LAN IP** access.
+The system is designed for zero-config deployment on a home or bakery server.
 
+### 🐳 Quick Start (Docker)
 ```bash
-# Clone the repository and navigate into it
+# Clone and enter the project
+git clone [repository-url] traegger
 cd traegger
 
-# Build and start all containers
+# Build and launch
 docker compose up -d --build
-
-# App will be accessible at http://<your-server-ip>/
 ```
-
-### 🐍 Option 2: Manual Development
-*Refer to the [Walkthrough](walkthrough.md) for detailed manual development steps.*
+The application will be accessible at `http://<your-server-ip>/` (or via your Tailscale IP).
 
 ---
 
-## 🌐 Deployment & Remote Access
+## 🛠️ Documentation
 
-Designed for private access via **Tailscale**:
-- **Tailscale**: Access your bakery dashboard from anywhere securely using your Tailscale IP.
-- **Local IP**: Access on your home Wi-Fi via your server's local IP address.
-- **Pure Docker**: Managed entirely via `docker-compose`, removing the need for host-level web servers (Caddy/Nginx) or manual process managers (Systemd).
+- **[User Manual](USER_MANUAL.md)**: Detailed guide on managing orders and production.
+- **[Deployment Guide](deployment_guide.md)**: Server setup and migration instructions.
+- **[System Spec](SPEC.md)**: Technical architecture and internal logic.
 
-*Refer to [deployment_guide.md](deployment_guide.md) for full server migration instructions.*
+---
+*Built for artisanal excellence.*

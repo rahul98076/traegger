@@ -1,85 +1,68 @@
-# Penny's Bakery Dashboard - User Manual
+# Traegger User Manual
 
-Welcome to the Penny's Bakery Dashboard! This application is designed to be a complete Management and Production ERP tailored specifically for artisan baking workflows.
-
-This document will walk you through exactly how to navigate the user interface, perform daily operations, and manage your bakery's workflow from start to finish.
+Welcome to the Traegger Bakery Management System. This tool is designed as a complete production and order management ERP for artisanal bakeries.
 
 ---
 
-## 1. Getting Started: The Interface
+## 1. Interface Overview
 
-When you log in, you will be greeted by the main layout, which is split into two primary areas:
-- **The Sidebar (Left):** This is your main navigation hub. Use it to jump between different modules like Orders, Customers, Menu, and the Kitchen Tracker.
-- **The Main Workspace (Center/Right):** This is where all your data, tables, and forms appear based on what you selected in the sidebar. 
-
-**Quick Tip:** On mobile devices, the sidebar collapses into a "Hamburger Menu" (three horizontal lines) in the top left corner. Tap it to open your navigation.
+- **Sidebar (Left)**: Your primary navigation for Orders, Customers, Menu, and Kitchen tracking.
+- **Main Workspace**: Displays project data, tables, and forms based on your selection.
+- **Mobile Access**: On mobile, use the top-left menu icon to toggle the sidebar.
 
 ---
 
-## 2. Managing Your Menu (`/menu`)
+## 2. Menu Management
 
-Before you can take orders, you need items to sell!
-
-- **Viewing Items:** By default, items are organized neatly by category (e.g., *Standard Cakes, Marzipan Treats*). You can toggle between a "Grid" (cards) or "Table" view using the buttons in the top right.
-- **Adding Items (Admin Only):** Click the blue **"Add New Item"** button. Fill out the Name, Category, Size/Unit (e.g., "1/2 kg"), Price (`₹`), and any special notes.
-- **Out of Stock?** If you run out of ingredients for something (like White Fruit Cake), simply click the toggle switch on that item to turn it **Off (Grey)**. It instantly becomes "Unavailable" and staff won't accidentally be able to add it to new orders.
+- **Categorization**: Items are organized by category (e.g., *Cakes*, *Daily Bread*). Change view modes using the icons in the top right.
+- **Adding Items**: (Admin Only) Click **"Add New Item"** to define name, category, unit, price, and notes.
+- **Inventory Toggle**: Use the availability toggle on any item to instantly enable or disable it for new orders.
 
 ---
 
-## 3. Managing Customers (`/customers`)
+## 3. Customer Management
 
-The Customers page acts as your digital address book.
+The Customers module acts as your central database for client information.
 
-- **Adding a Customer:** Click **"Add New Customer"**. You can log their Name, Phone, WhatsApp, and Address. 
-- **VIP Status:** Notice the **"VIP Customer"** toggle? Turn this on for loyal clients. They will get a special Gold Star (⭐) next to their name anywhere they appear in the app!
-- **Searching:** Use the search bar at the top to quickly find someone by name or phone number when they are standing at the counter.
-
----
-
-## 4. The Daily Workflow: Taking Orders & Baking
-
-This is the core lifecycle of how the app handles your bakery flow:
-
-### Step 1: Taking an Order (`/orders`)
-1. Click **"New Order"** in the top right of the Orders page.
-2. Search and select the customer. 
-3. Choose the **Due Date** (when they need it) and the **Fulfillment Type** (Pickup or Delivery).
-4. Click **"Add Item"** to pull from your Menu. Adjust quantities as needed. Add a flat or percent discount if necessary. 
-5. Hit **"Create Order"**. 
-
-### Step 2: Tracking Payment & Status (`/orders`)
-On an Order's Detail page, you can see its lifecycle. 
-- **Payment:** When a customer pays an advance via GPay or Cash, click **Edit** and change the Payment Status to `Partial` or `Paid`, and type in the amount collected.
-- **Order Status:** Move the order status logically from `Pending` ➔ `Confirmed`. Once it's actively being prepped in the kitchen, move it to `In Progress`.
-
-### Step 3: Production Planning (`/production`)
-The Production page is your automated clipboard. You *do not* edit anything here.
-- Click on **"Today"**, **"Tomorrow"**, or **"This Week"**. 
-- The app automatically looks at every active order due in that timeframe, groups the same items together, and tells you the exact aggregated quantities you need to bake. (e.g., *Total Due: 15 Marzipan Eggs*).
-
-### Step 4: Tracking Kitchen Batches (`/kitchen`)
-Now that you know what to bake, you manage the physical baking process here!
-1. Click **"New Batch"**. 
-2. Select the item (e.g., Marzipan Egg), set the Quantity you are making, and assign it to a Date. 
-3. As the physical items move through your kitchen, click the "Update Stage" dropdown to move the batch along:
-   `Queued` ➔ `Prepping` ➔ `Baking` ➔ `Cooling` ➔ `Decorating` ➔ `Packed`.
-4. **Assigning:** Once baked, you can click "Assign Orders" to link those specific baked goods to the customer orders that were waiting for them!
+- **Adding Customers**: Log name, phone, WhatsApp, and delivery address.
+- **VIP Status**: Enable the VIP toggle for key clients to mark them with a status icon throughout the system.
+- **Search**: Use the top search bar to locate customers by name or phone number.
 
 ---
 
-## 5. Daily Dashboards & Analytics (`/dashboard`)
+## 4. Operational Workflow
 
-The Dashboard is your morning overview. It tells you how your business is doing right now.
-- **Top Metrics:** Look at "Today's Revenue", how many orders are "Pending Collection", and how many are scheduled for "Pickup Today". 
-- **Visual Charts:** Check the graphs to see your sales trends over the week or analyze your top-selling categories.
-- **Cloud Sync:** In the top right corner, a green `Live` badge indicates that every order you make is safely backing up to your Google Firebase secure cloud.
+The system follows a logical lifecycle from order intake to physical production:
+
+### Step 1: Order Intake
+1. Create a **"New Order"** from the Orders page.
+2. Select the customer and define the fulfillment date and type (Pickup/Delivery).
+3. Add items from the menu, specifying quantities and any applicable discounts.
+
+### Step 2: Order Lifecycle
+1. **Payments**: Log advance payments or full settlements in the order details.
+2. **Status**: Update the status from `Pending` through `Confirmed` and `In Progress` as the order moves through the workflow.
+
+### Step 3: Production Aggregation
+The Production page automatically aggregates all items due for a specific period (Today, Tomorrow, This Week). This provides the kitchen with total quantities required for prep.
+
+### Step 4: Kitchen Tracking
+1. Create a **"New Batch"** for items currently in production.
+2. Update the batch stage as it moves from `Queued` → `Baking` → `Cooling` → `Decorating` → `Packed`.
+3. **Assigning**: Once packed, link the batch to the specific customer orders waiting for fulfillment.
 
 ---
 
-## 6. Administrative Tools (Settings)
+## 5. Analytics & Monitoring
 
-Only users with the **Admin** role can access the Settings gear at the bottom of the sidebar. 
+The Dashboard provides a real-time overview of business performance:
+- **Metrics**: Track revenue, pending collections, and scheduled pickups for the day.
+- **System Status**: The status indicator confirms that data is synchronized and backed up.
 
-- **User Accounts:** Need to give a new employee login access? Go to the "Users" tab, click "Add User", and assign them the "Editor" role. If someone quits, you can instantly hit **Force Logout** to kick them out of the app.
-- **Audit Logs:** Check the "System Audit" tab. The app secretly records every single change made by any employee. If a price is changed or an order is deleted, the Audit Log tells you exactly *who* did it and the *before/after* values.
-- **Database Backups:** Use the "Data" tab to download a full `.json` backup of your entire bakery's database straight to your local computer for safekeeping.
+---
+
+## 6. Administration
+
+- **User Accounts**: Manage employee access and roles. Admins can "Force Logout" any active session if necessary.
+- **Audit Trail**: Access the "System Audit" tab to review a log of all data changes, including before/after values and responsible users.
+- **Data Management**: Use the "Data" tab for manual exports. This supplements the automated system-wide backups.
