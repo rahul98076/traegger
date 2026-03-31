@@ -10,27 +10,22 @@ jobs:
     runs-on: self-hosted
     
     steps:
-      - name: Stop, Pull, Move DB, and Restart services via Docker Compose
+      - name: Deploy Traegger
         run: |
           # 1. Enter the live production directory
           cd /home/rahul/traegger
           
-          # 2. Stop the old systemd service if it exists (for host-to-docker migration)
-          sudo systemctl stop pennys-backend || true
-          sudo systemctl disable pennys-backend || true
-          
-          # 3. Rename current DB file for the new structure (one-time migration check)
-          # Correcting: mv traegger.db to pennys.db if it exists in backend/
-          if [ -f backend/traegger.db ]; then
-            mv backend/traegger.db backend/pennys.db
-          fi
-          
-          # 4. Pull latest commits
+          # 2. Pull latest code changes from main
           git pull origin main
 
-          # 5. Build and deploy
+          # 3. Rebuild images with the new code
           docker compose build
-          #   Apply DB migrations via a temporary backend container
+
+          # 4. Apply database migrations (using the updated backend image)
           docker compose run --rm backend alembic upgrade head
-          #   Restart everything in background
+
+          # 5. Restart services with the new images
           docker compose up -d
+
+          # 6. Housekeeping: cleanup unused Docker objects to save disk
+          docker image prune -f
