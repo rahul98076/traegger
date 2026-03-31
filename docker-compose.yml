@@ -12,6 +12,7 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:////data/pennys.db
     volumes:
       - ./backend/pennys.db:/data/pennys.db
+      - ./backend/traegger-c0901-firebase-adminsdk-fbsvc-e92b5c9c29.json:/app/traegger-c0901-firebase-adminsdk-fbsvc-e92b5c9c29.json
     networks:
       - traegger-network
 
