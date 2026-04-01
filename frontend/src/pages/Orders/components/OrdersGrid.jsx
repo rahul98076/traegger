@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatPaiseToRupees } from '@/utils/formatters';
+import { formatPaiseToRupees, formatDate } from '@/utils/formatters';
 import { CalendarDays } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -34,7 +34,7 @@ export default function OrdersGrid({ orders, onOrderClick }) {
               <div>
                 <p className="font-semibold text-base">{o.customer_name || `Customer #${o.customer_id}`}</p>
                 <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                  <CalendarDays className="h-3 w-3" /> Due: {o.due_date}
+                  <CalendarDays className="h-3 w-3" /> Due: {formatDate(o.due_date)}
                 </p>
               </div>
               <span className="text-xs text-slate-400 font-mono">#{o.id}</span>

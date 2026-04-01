@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import { getOrder, updateOrderStatus, updateOrderPayment, deleteOrder, restoreOrder, duplicateOrder, fetchOrderAudit } from '@/api/orders';
 import { getCustomer } from '@/api/customers';
-import { formatPaiseToRupees } from '@/utils/formatters';
+import { formatPaiseToRupees, formatDate } from '@/utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -179,7 +179,7 @@ export default function OrderDetail() {
             <Badge className={`${PAYMENT_COLORS[order.payment_status] || 'bg-slate-400'} text-white`}>
               {order.payment_status}
             </Badge>
-            <span className="text-sm text-slate-500">Due: {order.due_date}</span>
+            <span className="text-sm text-slate-500">Due: {formatDate(order.due_date)}</span>
             <Badge variant="outline" className="capitalize">{order.fulfillment_type}</Badge>
             {order.is_deleted && <Badge variant="destructive">Deleted</Badge>}
           </div>
@@ -360,7 +360,7 @@ export default function OrderDetail() {
                   {auditLogs.map((log) => (
                     <div key={log.id} className="relative">
                       <div className="absolute -left-[21px] top-1 h-3 w-3  bg-slate-200 border-2 border-white" />
-                      <div className="text-xs text-slate-400 mb-1">{log.timestamp} by {log.username}</div>
+                      <div className="text-xs text-slate-400 mb-1">{formatDate(log.timestamp)} by {log.username}</div>
                       <div className="text-sm">
                         <span className="font-semibold capitalize">{log.action}:</span> {renderDiff(log)}
                       </div>
@@ -373,7 +373,7 @@ export default function OrderDetail() {
         </Card>
 
         <p className="text-xs text-slate-400 text-center">
-          Created {order.created_at} · Updated {order.updated_at}
+          Created {formatDate(order.created_at)} · Updated {formatDate(order.updated_at)}
         </p>
       </div>
     </div>

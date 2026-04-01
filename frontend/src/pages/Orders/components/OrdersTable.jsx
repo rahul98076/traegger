@@ -3,7 +3,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { formatPaiseToRupees } from '@/utils/formatters';
+import { formatPaiseToRupees, formatDate } from '@/utils/formatters';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -76,7 +76,7 @@ export default function OrdersTable({ orders, onOrderClick, sortField, sortOrder
             >
               <TableCell className="font-mono text-sm text-slate-500">{o.id}</TableCell>
               <TableCell className="font-medium">{o.customer_name || `Customer #${o.customer_id}`}</TableCell>
-              <TableCell>{o.due_date}</TableCell>
+              <TableCell>{formatDate(o.due_date)}</TableCell>
               <TableCell className="text-sm text-slate-600 max-w-[200px] truncate">
                 {o.items?.map(i => `${i.menu_item_name || 'Item'} ×${i.quantity}`).join(', ') || '—'}
               </TableCell>
