@@ -339,6 +339,7 @@ function UsersTable({ users, loading, onRefresh }) {
 
 function AddUserForm({ onUserAdded }) {
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('staff');
   const [submitting, setSubmitting] = useState(false);
@@ -347,11 +348,20 @@ function AddUserForm({ onUserAdded }) {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await createUser({ username, password, role });
+      await createUser({ username, display_name: displayName, password, role });
       toast.success("User created successfully");
       onUserAdded();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to create user");
+      // Handle Pydantic validation error lists safely
+      let errorMsg = "Failed to create user";
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMsg = err.response.data.detail.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(', ');
+        } else {
+          errorMsg = err.response.data.detail;
+        }
+      }
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -362,6 +372,10 @@ function AddUserForm({ onUserAdded }) {
       <div className="space-y-2">
         <Label>Username</Label>
         <Input required value={username} onChange={e => setUsername(e.target.value)} placeholder="e.g. rahul_admin" />
+      </div>
+      <div className="space-y-2">
+        <Label>Display Name</Label>
+        <Input required value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Rahul Admin" />
       </div>
       <div className="space-y-2">
         <Label>Initial Password</Label>

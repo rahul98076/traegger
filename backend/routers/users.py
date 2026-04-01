@@ -28,7 +28,7 @@ async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         
     new_user = User(
         username=user_in.username,
-        display_name=user_in.display_name,
+        display_name=user_in.display_name or user_in.username,
         hashed_password=get_password_hash(user_in.password),
         role=user_in.role
     )

@@ -23,7 +23,7 @@ class Token(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    display_name: str
+    display_name: str | None = None
     password: str
     role: str
 
