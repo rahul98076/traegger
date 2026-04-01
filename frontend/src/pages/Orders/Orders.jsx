@@ -16,13 +16,23 @@ const PAYMENT_OPTIONS = ['unpaid', 'partial', 'paid'];
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('table');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState([]);
-  const [paymentFilter, setPaymentFilter] = useState([]);
-  const [dueDateFilter, setDueDateFilter] = useState('');
-  const [sortField, setSortField] = useState('due_date');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('orders_view_mode') || 'table');
+  const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('orders_search_query') || '');
+  const [statusFilter, setStatusFilter] = useState(() => {
+    try {
+      const saved = localStorage.getItem('orders_status_filter');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [paymentFilter, setPaymentFilter] = useState(() => {
+    try {
+      const saved = localStorage.getItem('orders_payment_filter');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [dueDateFilter, setDueDateFilter] = useState(() => localStorage.getItem('orders_due_date_filter') || '');
+  const [sortField, setSortField] = useState(() => localStorage.getItem('orders_sort_field') || 'due_date');
+  const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('orders_sort_order') || 'desc');
 
   const { user } = useAuthStore();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
@@ -51,6 +61,21 @@ export default function Orders() {
     const debounce = setTimeout(() => loadOrders(), 300);
     return () => clearTimeout(debounce);
   }, [searchQuery, statusFilter, paymentFilter, dueDateFilter]);
+  
+  // Persist sort settings
+  useEffect(() => {
+    localStorage.setItem('orders_sort_field', sortField);
+    localStorage.setItem('orders_sort_order', sortOrder);
+  }, [sortField, sortOrder]);
+
+  // Persist view mode and filters
+  useEffect(() => {
+    localStorage.setItem('orders_view_mode', viewMode);
+    localStorage.setItem('orders_search_query', searchQuery);
+    localStorage.setItem('orders_status_filter', JSON.stringify(statusFilter));
+    localStorage.setItem('orders_payment_filter', JSON.stringify(paymentFilter));
+    localStorage.setItem('orders_due_date_filter', dueDateFilter);
+  }, [viewMode, searchQuery, statusFilter, paymentFilter, dueDateFilter]);
 
   const toggleStatusFilter = (s) => {
     setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
