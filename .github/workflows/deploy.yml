@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'deployment_guide.md'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
