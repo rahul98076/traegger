@@ -38,14 +38,12 @@ The system is designed for zero-config deployment on a home or bakery server.
 ### 🐳 Quick Start (Docker)
 ```bash
 # Clone and enter the project
-git clone [repository-url] traegger
+git clone https://github.com/rahul98076/traegger.git
 cd traegger
 
 # Build and launch
 docker compose up -d --build
 ```
-The application will be accessible at `http://<your-server-ip>/` (or via your Tailscale IP).
-
 ---
 
 ## 🛠️ Documentation

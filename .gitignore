@@ -97,6 +97,7 @@ backend/traegger.db
 *.sqlite
 *.sqlite3
 backend/traegger.db
+walkthrough.md
 
 # Env
 .env
